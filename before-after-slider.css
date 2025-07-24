@@ -1,0 +1,92 @@
+/* Adapted from CodyHouse Image Comparison Slider */
+.cd-image-container {
+  position: relative;
+  width: 90%;
+  max-width: 768px;
+  margin: 2em auto;
+  user-select: none; /* Prevents text selection during drag */
+}
+
+.cd-image-container img {
+  display: block;
+  width: 100%;
+}
+
+.cd-image-label {
+  position: absolute;
+  bottom: 0;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 1em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  white-space: nowrap; 
+}
+
+.cd-image-label.is-hidden {
+  visibility: hidden;
+}
+
+.cd-resize-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%; /* Initial position */
+  height: 100%;
+  overflow: hidden;
+  /* Force Hardware Acceleration */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  z-index: 2; /* Puts the "after" image wrapper on top of the "before" image */
+}
+
+.cd-resize-img img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: auto;
+  max-width: none; /* This is crucial to prevent the image from resizing */
+}
+
+.cd-resize-img .cd-image-label {
+  right: auto;
+  left: 0;
+  z-index: 5; /* Ensure "after" label is on top of its image */
+}
+
+.is-visible .cd-resize-img {
+  width: 50%;
+}
+
+.cd-handle {
+  position: absolute;
+  height: 44px;
+  width: 44px;
+  /* center the element */
+  left: 50%;
+  top: 50%;
+  margin-left: -22px;
+  margin-top: -22px;
+  border-radius: 50%;
+  background: #c8007a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><polygon points="6,2 0,8 6,14" style="fill:white;"/><polygon points="10,2 16,8 10,14" style="fill:white;"/></svg>') no-repeat center center;
+  cursor: move;
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 10; /* Ensures the handle is on top of everything */
+}
+
+.cd-handle.draggable {
+  /* change background color when element is active */
+  background-color: #396004;
+}
+
+.cd-image-label[data-type="original"] {
+    right: 0;
+    z-index: 1; /* This is the fix: Puts the "before" label below the "after" image wrapper */
+}
+
+.cd-image-label[data-type="modified"] {
+    right: auto;
+    left: 0;
+}
