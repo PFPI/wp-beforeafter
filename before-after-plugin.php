@@ -293,13 +293,13 @@ function beforeafter_dates_callback( $post ) {
     ?>
     <p>
         <label for="beforeafter_before_date"><?php _e( 'Before Date (Text):', 'beforeafter' ); ?></label>
-        <input type="text" name="beforeafter_before_date" id="beforeafter_before_date" value="<?php echo esc_attr( $before_date ); ?>" class="large-text" />
+        <input type="text" name="beforeafter_before_date" id="beforeafter_before_date" value="<?php echo esc_attr( $before_date ); ?>" class="large-text" pattern="\d{4}-\d{2}" title="Please use the format YYYY-MM" />
         <small><?php _e( 'e.g., 2010, Spring 2015, January 2020', 'beforeafter' ); ?></small>
     </p>
     <p>
         <label for="beforeafter_disturbed_date"><?php _e( 'Disturbed Date (Text):', 'beforeafter' ); ?></label>
-        <input type="text" name="beforeafter_disturbed_date" id="beforeafter_disturbed_date" value="<?php echo esc_attr( get_post_meta( $post->ID, '_beforeafter_disturbed_date', true ) ); ?>" class="large-text" />
-        <small><?php _e( 'e.g., 2018, Summer 2019, March 2021', 'beforeafter' ); ?></small>
+ <input type="text" name="beforeafter_disturbed_date" id="beforeafter_disturbed_date" value="<?php echo esc_attr( get_post_meta( $post->ID, '_beforeafter_disturbed_date', true ) ); ?>" class="large-text" pattern="\d{4}" title="Please use the format YYYY" />
+         <small><?php _e( 'e.g., 2018, Summer 2019, March 2021', 'beforeafter' ); ?></small>
     </p>    
     <p>
         <label for="beforeafter_after_date"><?php _e( 'After Date (Text):', 'beforeafter' ); ?></label>
@@ -483,6 +483,36 @@ function beforeafter_save_meta_data( $post_id ) {
 // Always assign the 'Logging Photos' term to this post on save.
 wp_set_object_terms( $post_id, 'logging-photos', 'type' );
 
+// --- NEW: Set Post Date from After Date ---
+// Check if the After Date is set and has the correct format.
+if ( isset( $_POST['beforeafter_after_date'] ) && ! empty( $_POST['beforeafter_after_date'] ) ) {
+    $after_date_value = sanitize_text_field( $_POST['beforeafter_after_date'] );
+
+    // Validate the YYYY-MM format before proceeding.
+    if ( preg_match( '/^\d{4}-\d{2}$/', $after_date_value ) ) {
+        // Construct the full date string for the first day of that month.
+        $new_post_date = $after_date_value . '-01 00:00:00';
+
+        // Prepare the data for updating the post.
+        $post_data = array(
+            'ID'            => $post_id,
+            'post_date'     => $new_post_date,
+            'post_date_gmt' => get_gmt_from_date( $new_post_date ),
+            'edit_date'     => true, // Required to signal an edit
+        );
+
+        // To prevent an infinite loop, we must unhook our save function before updating the post.
+        remove_action( 'save_post', 'beforeafter_save_meta_data', 10, 3 );
+
+        // Update the post with the new date.
+        wp_update_post( $post_data );
+
+        // Re-hook our function so it runs on the next save.
+        add_action( 'save_post', 'beforeafter_save_meta_data', 10, 3 );
+    }
+}
+
+
 // --- NEW: Set Featured Image ---
 // ... (your existing featured image code) ...
     // --- NEW: Set Featured Image ---
@@ -613,46 +643,6 @@ add_filter( 'upload_mimes', 'beforeafter_add_custom_mime_types' );
 
 
 
-/**
- * Include 'beforeafter' custom post type in search results and FacetWP queries.
- *
- * @param WP_Query $query The WP_Query instance (passed by reference).
- */
-function beforeafter_include_in_search_and_facets( $query ) {
-    // Only modify the main query on the front-end for searches or FacetWP-powered pages.
-    if ( ! is_admin() && $query->is_main_query() && ( $query->is_search() || ! empty( $query->get('facetwp') ) ) ) {
-
-        // Get the existing post types from the query.
-        $post_types = $query->get( 'post_type' );
-
-        // If no specific post types are set, create an empty array.
-        if ( empty( $post_types ) ) {
-            $post_types = [];
-        }
-
-        // Ensure it's an array so we can add to it.
-        $post_types = (array) $post_types;
-
-        // Add our 'beforeafter' custom post type if it's not already there.
-        if ( ! in_array( 'beforeafter', $post_types ) ) {
-            $post_types[] = 'beforeafter';
-        }
-
-        // Also include standard posts, as they are often part of the search.
-        if ( ! in_array( 'post', $post_types ) ) {
-            $post_types[] = 'post';
-        }
-
-        // Also include resources posts, as they are part of the search.
-        if ( ! in_array( 'resources', $post_types ) ) {
-            $post_types[] = 'resources';
-        }
-
-        // Set the modified array of post types back into the query.
-        $query->set( 'post_type', $post_types );
-    }
-}
-add_action( 'pre_get_posts', 'beforeafter_include_in_search_and_facets' );
 
 /**
  * Sets a default featured image for 'beforeafter' posts using an SVG from the plugin's assets folder.
