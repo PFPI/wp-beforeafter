@@ -53,7 +53,7 @@ function beforeafter_register_post_type() {
         'label'                 => __( 'Before & After', 'beforeafter' ),
         'description'           => __( 'Custom post type for Before & After images', 'beforeafter' ),
         'labels'                => $labels,
-        'supports'              => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+        'supports'              => array( 'title', 'thumbnail' ),
         'hierarchical'          => false,
         'public'                => true,
         'show_ui'               => true,
@@ -76,10 +76,11 @@ add_action( 'init', 'beforeafter_register_post_type', 0 );
 /**
  * Link 'beforeafter' custom post type to 'location' taxonomy.
  */
-function beforeafter_add_location_taxonomy_support() {
+function beforeafter_add_taxonomy_support() {
     register_taxonomy_for_object_type( 'location', 'beforeafter' );
+    register_taxonomy_for_object_type( 'type', 'beforeafter' );
 }
-add_action( 'init', 'beforeafter_add_location_taxonomy_support' );
+add_action( 'init', 'beforeafter_add_taxonomy_support' );
 
 /**
  * Include custom archive template from plugin directory.
@@ -148,11 +149,15 @@ function beforeafter_enqueue_custom_slider_scripts() {
         $latitude = get_post_meta( $post_id, '_beforeafter_latitude', true );
         $longitude = get_post_meta( $post_id, '_beforeafter_longitude', true );
         $zoom_level = get_post_meta( $post_id, '_beforeafter_zoom_level', true );
+        $geojson_file_id = get_post_meta( $post_id, '_beforeafter_geojson_file_id', true );
+        $geojson_file_url = $geojson_file_id ? wp_get_attachment_url( $geojson_file_id ) : '';
+
 
         wp_localize_script('beforeafter-map-js', 'beforeafter_map_data', array(
             'lat' => $latitude,
             'lng' => $longitude,
-            'zoom' => $zoom_level
+            'zoom' => $zoom_level,
+            'geojson_url' => $geojson_file_url
         ));
     }
 }
@@ -233,6 +238,15 @@ function beforeafter_add_meta_boxes() {
         'normal',
         'high'
     );
+    
+    add_meta_box(
+        'beforeafter_geojson',
+        __( 'GeoJSON File', 'beforeafter' ),
+        'beforeafter_geojson_callback',
+        'beforeafter',
+        'normal',
+        'high'
+    );
 }
 add_action( 'add_meta_boxes', 'beforeafter_add_meta_boxes' );
 
@@ -283,10 +297,34 @@ function beforeafter_dates_callback( $post ) {
         <small><?php _e( 'e.g., 2010, Spring 2015, January 2020', 'beforeafter' ); ?></small>
     </p>
     <p>
+        <label for="beforeafter_disturbed_date"><?php _e( 'Disturbed Date (Text):', 'beforeafter' ); ?></label>
+        <input type="text" name="beforeafter_disturbed_date" id="beforeafter_disturbed_date" value="<?php echo esc_attr( get_post_meta( $post->ID, '_beforeafter_disturbed_date', true ) ); ?>" class="large-text" />
+        <small><?php _e( 'e.g., 2018, Summer 2019, March 2021', 'beforeafter' ); ?></small>
+    </p>    
+    <p>
         <label for="beforeafter_after_date"><?php _e( 'After Date (Text):', 'beforeafter' ); ?></label>
         <input type="text" name="beforeafter_after_date" id="beforeafter_after_date" value="<?php echo esc_attr( $after_date ); ?>" class="large-text" />
         <small><?php _e( 'e.g., 2020, Fall 2022, December 2023', 'beforeafter' ); ?></small>
     </p>
+    <p>
+    <label for="beforeafter_conclusion"><?php _e( 'Conclusion:', 'beforeafter' ); ?></label>
+    <select name="beforeafter_conclusion" id="beforeafter_conclusion" class="large-text">
+        <?php
+        $current_conclusion = get_post_meta( $post->ID, '_beforeafter_conclusion', true );
+        $options = array(
+            'Probable Clearcut',
+            'Probable Thinning',
+            'False Positive',
+            'Fire',
+            'Undeterminable',
+        );
+
+        foreach ( $options as $option ) {
+            echo '<option value="' . esc_attr( $option ) . '"' . selected( $current_conclusion, $option, false ) . '>' . esc_html( $option ) . '</option>';
+        }
+        ?>
+    </select>
+</p>
     <?php
 }
 
@@ -324,6 +362,23 @@ function beforeafter_sitecode_callback( $post ) {
         <label for="beforeafter_sitecode"><?php _e( 'Sitecode:', 'beforeafter' ); ?></label>
         <input type="text" name="beforeafter_sitecode" id="beforeafter_sitecode" value="<?php echo esc_attr( $sitecode ); ?>" pattern="[a-zA-Z0-9]+" title="Alphanumeric characters only" />
         <small><?php _e( 'Alphanumeric characters only.', 'beforeafter' ); ?></small>
+    </p>
+    <?php
+}
+
+/**
+ * Callback for the GeoJSON meta box
+ */
+function beforeafter_geojson_callback( $post ) {
+    $geojson_file_id = get_post_meta( $post->ID, '_beforeafter_geojson_file_id', true );
+    $geojson_file_url = $geojson_file_id ? wp_get_attachment_url( $geojson_file_id ) : '';
+    ?>
+    <p>
+        <label for="beforeafter_geojson_file"><?php _e( 'GeoJSON File:', 'beforeafter' ); ?></label><br>
+        <input type="hidden" name="beforeafter_geojson_file_id" id="beforeafter_geojson_file_id" value="<?php echo esc_attr( $geojson_file_id ); ?>" />
+        <span id="beforeafter_geojson_file_name"><?php echo esc_html( basename( $geojson_file_url ) ); ?></span><br>
+        <button type="button" class="button beforeafter_upload_file_button" data-field="geojson_file"><?php _e( 'Select GeoJSON File', 'beforeafter' ); ?></button>
+        <button type="button" class="button beforeafter_remove_file_button" data-field="geojson_file" style="<?php echo empty($geojson_file_url) ? 'display:none;' : ''; ?>"><?php _e( 'Remove GeoJSON File', 'beforeafter' ); ?></button>
     </p>
     <?php
 }
@@ -384,6 +439,20 @@ function beforeafter_save_meta_data( $post_id ) {
         delete_post_meta( $post_id, '_beforeafter_after_date' );
     }
 
+    // Save Disturbed Date
+    if ( isset( $_POST['beforeafter_disturbed_date'] ) ) {
+        update_post_meta( $post_id, '_beforeafter_disturbed_date', sanitize_text_field( $_POST['beforeafter_disturbed_date'] ) );
+    } else {
+        delete_post_meta( $post_id, '_beforeafter_disturbed_date' );
+    }
+
+    // Save Conclusion
+    if ( isset( $_POST['beforeafter_conclusion'] ) ) {
+        update_post_meta( $post_id, '_beforeafter_conclusion', sanitize_text_field( $_POST['beforeafter_conclusion'] ) );
+    } else {
+        delete_post_meta( $post_id, '_beforeafter_conclusion' );
+    }
+
     // Save Latitude
     if ( isset( $_POST['beforeafter_latitude'] ) ) {
         update_post_meta( $post_id, '_beforeafter_latitude', sanitize_text_field( $_POST['beforeafter_latitude'] ) );
@@ -403,8 +472,30 @@ function beforeafter_save_meta_data( $post_id ) {
     if ( isset( $_POST['beforeafter_sitecode'] ) ) {
         update_post_meta( $post_id, '_beforeafter_sitecode', sanitize_text_field( $_POST['beforeafter_sitecode'] ) );
     }
+    
+    // Save GeoJSON File ID
+    if ( isset( $_POST['beforeafter_geojson_file_id'] ) ) {
+        update_post_meta( $post_id, '_beforeafter_geojson_file_id', sanitize_text_field( $_POST['beforeafter_geojson_file_id'] ) );
+    } else {
+        delete_post_meta( $post_id, '_beforeafter_geojson_file_id' );
+    }
+// --- NEW: Set Default Taxonomy Term ---
+// Always assign the 'Logging Photos' term to this post on save.
+wp_set_object_terms( $post_id, 'logging-photos', 'type' );
+
+// --- NEW: Set Featured Image ---
+// ... (your existing featured image code) ...
+    // --- NEW: Set Featured Image ---
+// Automatically set the 'After' image as the featured image.
+if ( isset( $_POST['beforeafter_after_image_id'] ) ) {
+    $after_image_id = sanitize_text_field( $_POST['beforeafter_after_image_id'] );
+    if ( ! empty( $after_image_id ) ) {
+        // This function sets the post's featured image.
+        set_post_thumbnail( $post_id, $after_image_id );
+    }
 }
-add_action( 'save_post', 'beforeafter_save_meta_data' );
+}
+add_action( 'save_post', 'beforeafter_save_meta_data');
 
 /**
  * Enqueue scripts for media uploader and custom meta box logic
@@ -509,3 +600,99 @@ function beforeafter_orderby( $query ) {
     }
 }
 add_action( 'pre_get_posts', 'beforeafter_orderby' );
+
+/**
+ * Allow geojson and json file uploads.
+ */
+function beforeafter_add_custom_mime_types( $mimes ) {
+    $mimes['geojson'] = 'application/geo+json';
+    $mimes['json'] = 'application/json';
+    return $mimes;
+}
+add_filter( 'upload_mimes', 'beforeafter_add_custom_mime_types' );
+
+
+
+/**
+ * Include 'beforeafter' custom post type in search results and FacetWP queries.
+ *
+ * @param WP_Query $query The WP_Query instance (passed by reference).
+ */
+function beforeafter_include_in_search_and_facets( $query ) {
+    // Only modify the main query on the front-end for searches or FacetWP-powered pages.
+    if ( ! is_admin() && $query->is_main_query() && ( $query->is_search() || ! empty( $query->get('facetwp') ) ) ) {
+
+        // Get the existing post types from the query.
+        $post_types = $query->get( 'post_type' );
+
+        // If no specific post types are set, create an empty array.
+        if ( empty( $post_types ) ) {
+            $post_types = [];
+        }
+
+        // Ensure it's an array so we can add to it.
+        $post_types = (array) $post_types;
+
+        // Add our 'beforeafter' custom post type if it's not already there.
+        if ( ! in_array( 'beforeafter', $post_types ) ) {
+            $post_types[] = 'beforeafter';
+        }
+
+        // Also include standard posts, as they are often part of the search.
+        if ( ! in_array( 'post', $post_types ) ) {
+            $post_types[] = 'post';
+        }
+
+        // Also include resources posts, as they are part of the search.
+        if ( ! in_array( 'resources', $post_types ) ) {
+            $post_types[] = 'resources';
+        }
+
+        // Set the modified array of post types back into the query.
+        $query->set( 'post_type', $post_types );
+    }
+}
+add_action( 'pre_get_posts', 'beforeafter_include_in_search_and_facets' );
+
+/**
+ * Sets a default featured image for 'beforeafter' posts using an SVG from the plugin's assets folder.
+ *
+ * This function hooks into the 'post_thumbnail_html' filter. If the incoming HTML is empty
+ * (meaning no featured image is set) and the post type is 'beforeafter', it generates
+ * an <img> tag pointing to the default SVG file.
+ *
+ * @param string $html              The post thumbnail HTML.
+ * @param int    $post_id           The post ID.
+ * @return string The post thumbnail HTML, modified if necessary.
+ */
+function beforeafter_default_svg_featured_image( $html, $post_id ) {
+    // Only run this check for our 'beforeafter' custom post type.
+    if ( 'beforeafter' === get_post_type( $post_id ) ) {
+        // If the post thumbnail HTML is empty, it means no featured image is set.
+        if ( empty( $html ) ) {
+            // Construct the full URL to the default SVG image in the plugin's assets folder.
+            $default_svg_url = plugin_dir_url( __FILE__ ) . 'assets/pattern.svg';
+
+            // Create the HTML for the default image.
+            $html = '<img src="' . esc_url( $default_svg_url ) . '" alt="' . esc_attr( get_the_title( $post_id ) ) . '" class="wp-post-image" />';
+        }
+    }
+    return $html;
+}
+add_filter( 'post_thumbnail_html', 'beforeafter_default_svg_featured_image', 10, 2 );
+
+
+/**
+ * Remove the 'Type' taxonomy meta box from the 'beforeafter' edit screen.
+ *
+ * Since the 'type' is set automatically on save, there is no need for the
+ * user to see or interact with this meta box.
+ */
+function beforeafter_remove_type_meta_box() {
+    remove_meta_box(
+        'typediv',       // The ID of the taxonomy meta box. For 'type', it's 'typediv'.
+        'beforeafter',   // The post type screen where it should be removed.
+        'side'           // The context (where it appears on the screen).
+    );
+}
+add_action( 'admin_menu', 'beforeafter_remove_type_meta_box' );

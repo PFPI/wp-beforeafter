@@ -12,6 +12,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }).addTo(map);
 
             L.marker([lat, lng]).addTo(map);
+
+            if (beforeafter_map_data.geojson_url) {
+                fetch(beforeafter_map_data.geojson_url)
+                    .then(response => response.json())
+                    .then(data => {
+                        L.geoJSON(data).addTo(map);
+                    })
+                    .catch(error => console.error('Error loading GeoJSON file:', error));
+            }
         }
     }
 });
