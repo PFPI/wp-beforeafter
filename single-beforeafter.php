@@ -35,50 +35,63 @@ get_header(); ?>
 
         <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
             <div class="container">
-                <div class="grid grid-cols-12 gap-8 my-10 lg:my-12">
-                    <div class="col-span-12 lg:col-span-8">
-                        <header class="entry-header">
-                            <?php the_title( '<h1 class="entry-title h1 text-moss font-display capitalize">', '</h1>' ); ?>
-                        </header><div class="entry-content prose">
-                            <?php the_content(); ?>
-                        </div><?php if ( $before_image_url && $after_image_url ) : ?>
-                            <figure id="custom-slider-<?php echo get_the_ID(); ?>" class="cd-image-container my-8">
-                                <img src="<?php echo esc_url( $before_image_url ); ?>" alt="<?php echo esc_attr( get_the_title() . ' Before' ); ?>">
-                                <?php if ( ! empty( $before_image_label ) ) : ?>
-                                    <span class="cd-image-label" data-type="original"><?php echo esc_html( $before_image_label ); ?></span>
-                                <?php endif; ?>
-
-                                <div class="cd-resize-img"> <img src="<?php echo esc_url( $after_image_url ); ?>" alt="<?php echo esc_attr( get_the_title() . ' After' ); ?>">
-                                    <?php if ( ! empty( $after_image_label ) ) : ?>
-                                        <span class="cd-image-label" data-type="modified"><?php echo esc_html( $after_image_label ); ?></span>
+                <div class="my-10 lg:my-12">
+                    <header class="entry-header">
+                        <?php the_title( '<h1 class="entry-title h1 text-moss font-display capitalize">', '</h1>' ); ?>
+                    </header>
+    
+                    <div class="grid grid-cols-12 gap-8 mt-4">
+                        <div class="col-span-12 lg:col-span-8">
+                            <div class="entry-content prose">
+                                <?php the_content(); ?>
+                            </div>
+                            <?php if ( $before_image_url && $after_image_url ) : ?>
+                                <figure id="custom-slider-<?php echo get_the_ID(); ?>" class="cd-image-container my-8">
+                                    <img src="<?php echo esc_url( $before_image_url ); ?>" alt="<?php echo esc_attr( get_the_title() . ' Before' ); ?>">
+                                    <?php if ( ! empty( $before_image_label ) ) : ?>
+                                        <span class="cd-image-label" data-type="original"><?php echo esc_html( $before_image_label ); ?></span>
                                     <?php endif; ?>
-                                </div>
-
-                                <span class="cd-handle"></span>
-                            </figure> <?php else : ?>
-                            <p><?php _e( 'Please upload both "Before" and "After" images.', 'beforeafter' ); ?></p>
-                        <?php endif; ?>
-
-                        <?php // --- NEW: Project Details Box --- ?>
-                        <?php if ( ! empty( $sitecode ) || ! empty( $latitude ) || ! empty( $longitude ) || ! empty( $zoom_level ) ) : ?>
-                        <div class="beforeafter-data bg-beige rounded-lg p-5 my-8 border border-neutral-300">
-                            <h3 class="h3 text-moss font-display capitalize"><?php _e( 'Project Details', 'beforeafter' ); ?></h3>
-                            <ul class="list-none p-0 m-0">
-                                <?php if ( ! empty( $sitecode ) ) : ?>
-                                    <li class="mb-2"><strong><?php _e( 'Site Code:', 'beforeafter' ); ?></strong> <?php echo esc_html( $sitecode ); ?></li>
-                                <?php endif; ?>
-                                <?php if ( ! empty( $latitude ) ) : ?>
-                                    <li class="mb-2"><strong><?php _e( 'Latitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $latitude ); ?></li>
-                                <?php endif; ?>
-                                <?php if ( ! empty( $longitude ) ) : ?>
-                                    <li class="mb-2"><strong><?php _e( 'Longitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $longitude ); ?></li>
-                                <?php endif; ?>
-                                <?php if ( ! empty( $zoom_level ) ) : ?>
-                                    <li class="mb-2"><strong><?php _e( 'Zoom Level:', 'beforeafter' ); ?></strong> <?php echo esc_html( $zoom_level ); ?></li>
-                                <?php endif; ?>
-                            </ul>
-                        </div><?php endif; ?>
-
+    
+                                    <div class="cd-resize-img"> <img src="<?php echo esc_url( $after_image_url ); ?>" alt="<?php echo esc_attr( get_the_title() . ' After' ); ?>">
+                                        <?php if ( ! empty( $after_image_label ) ) : ?>
+                                            <span class="cd-image-label" data-type="modified"><?php echo esc_html( $after_image_label ); ?></span>
+                                        <?php endif; ?>
+                                    </div>
+    
+                                    <span class="cd-handle"></span>
+                                </figure>
+                            <?php else : ?>
+                                <p><?php _e( 'Please upload both "Before" and "After" images.', 'beforeafter' ); ?></p>
+                            <?php endif; ?>
+    
+                            <?php if ( ! empty( $latitude ) && ! empty( $longitude ) ) : ?>
+                                <div id="beforeafter-map" style="height: 400px; margin-top: 20px;"></div>
+                            <?php endif; ?>
+    
+                        </div>
+    
+                        <div class="col-span-12 lg:col-span-4">
+                            <?php // --- Project Details Box --- ?>
+                            <?php if ( ! empty( $sitecode ) || ! empty( $latitude ) || ! empty( $longitude ) || ! empty( $zoom_level ) ) : ?>
+                            <div class="beforeafter-data bg-beige rounded-lg p-5 border border-neutral-300">
+                                <h3 class="h3 text-moss font-display capitalize"><?php _e( 'Project Details', 'beforeafter' ); ?></h3>
+                                <ul class="list-none p-0 m-0">
+                                    <?php if ( ! empty( $sitecode ) ) : ?>
+                                        <li class="mb-2"><strong><?php _e( 'Site Code:', 'beforeafter' ); ?></strong> <?php echo esc_html( $sitecode ); ?></li>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $latitude ) ) : ?>
+                                        <li class="mb-2"><strong><?php _e( 'Latitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $latitude ); ?></li>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $longitude ) ) : ?>
+                                        <li class="mb-2"><strong><?php _e( 'Longitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $longitude ); ?></li>
+                                    <?php endif; ?>
+                                    <?php if ( ! empty( $zoom_level ) ) : ?>
+                                        <li class="mb-2"><strong><?php _e( 'Zoom Level:', 'beforeafter' ); ?></strong> <?php echo esc_html( $zoom_level ); ?></li>
+                                    <?php endif; ?>
+                                </ul>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>

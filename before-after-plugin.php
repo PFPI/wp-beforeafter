@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Before & After Showcase
-Plugin URI:  https://example.com/before-after-plugin
+Plugin URI:  https://samdavisphd.com/before-after-showcase
 Description: Registers a custom post type for Before & After images with location data.
 Version:     1.0
-Author:      Your Name
-Author URI:  https://example.com
+Author:     Sam Davis
+Author URI: https://samdavisphd.com
 License:     GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: beforeafter
@@ -108,6 +108,14 @@ function beforeafter_enqueue_custom_slider_scripts() {
             '1.0.0'
         );
 
+        // Enqueue Leaflet CSS
+        wp_enqueue_style(
+            'leaflet-css',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+            array(),
+            '1.9.4'
+        );
+
         // Enqueue custom slider JS in the footer
         wp_enqueue_script(
             'beforeafter-slider-js',
@@ -116,9 +124,40 @@ function beforeafter_enqueue_custom_slider_scripts() {
             '1.0.0',
             true // Load in footer
         );
+
+        // Enqueue Leaflet JS
+        wp_enqueue_script(
+            'leaflet-js',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+            array(),
+            '1.9.4',
+            true
+        );
+
+        // Enqueue custom map JS
+        wp_enqueue_script(
+            'beforeafter-map-js',
+            plugin_dir_url( __FILE__ ) . 'before-after-map.js',
+            array( 'leaflet-js' ),
+            '1.0.0',
+            true
+        );
+
+        // Pass data to script
+        $post_id = get_the_ID();
+        $latitude = get_post_meta( $post_id, '_beforeafter_latitude', true );
+        $longitude = get_post_meta( $post_id, '_beforeafter_longitude', true );
+        $zoom_level = get_post_meta( $post_id, '_beforeafter_zoom_level', true );
+
+        wp_localize_script('beforeafter-map-js', 'beforeafter_map_data', array(
+            'lat' => $latitude,
+            'lng' => $longitude,
+            'zoom' => $zoom_level
+        ));
     }
 }
 add_action( 'wp_enqueue_scripts', 'beforeafter_enqueue_custom_slider_scripts' );
+
 
 /**
  * Filter image attributes to prevent lazy loading on custom slider images.
@@ -470,4 +509,3 @@ function beforeafter_orderby( $query ) {
     }
 }
 add_action( 'pre_get_posts', 'beforeafter_orderby' );
-
