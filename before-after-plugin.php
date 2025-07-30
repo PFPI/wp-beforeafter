@@ -360,7 +360,7 @@ function beforeafter_sitecode_callback( $post ) {
     ?>
     <p>
         <label for="beforeafter_sitecode"><?php _e( 'Sitecode:', 'beforeafter' ); ?></label>
-        <input type="text" name="beforeafter_sitecode" id="beforeafter_sitecode" value="<?php echo esc_attr( $sitecode ); ?>" pattern="[a-zA-Z0-9]+" title="Alphanumeric characters only" />
+        <input type="text" name="beforeafter_sitecode" id="beforeafter_sitecode" value="<?php echo esc_attr( $sitecode ); ?>" pattern="[a-zA-Z0-9]{9}" title="Please enter a 9-character alphanumeric code" />
         <small><?php _e( 'Alphanumeric characters only.', 'beforeafter' ); ?></small>
     </p>
     <?php
@@ -470,7 +470,9 @@ function beforeafter_save_meta_data( $post_id ) {
 
     // Save Sitecode
     if ( isset( $_POST['beforeafter_sitecode'] ) ) {
-        update_post_meta( $post_id, '_beforeafter_sitecode', sanitize_text_field( $_POST['beforeafter_sitecode'] ) );
+        // First, trim whitespace, then sanitize the result.
+        $sanitized_sitecode = sanitize_text_field( trim( $_POST['beforeafter_sitecode'] ) );
+        update_post_meta( $post_id, '_beforeafter_sitecode', $sanitized_sitecode );
     }
     
     // Save GeoJSON File ID
@@ -686,3 +688,59 @@ function beforeafter_remove_type_meta_box() {
     );
 }
 add_action( 'admin_menu', 'beforeafter_remove_type_meta_box' );
+
+
+/**
+ * Displays related 'beforeafter' posts based on a shared sitecode.
+ *
+ * This function queries for other posts of the same type that have the same
+ * '_beforeafter_sitecode' meta value and displays them using the theme's
+ * 'content-excerpt' template part for consistent styling.
+ */
+function beforeafter_display_related_by_sitecode() {
+    // Get the current post's ID and sitecode.
+    $current_post_id = get_the_ID();
+    $sitecode = get_post_meta( $current_post_id, '_beforeafter_sitecode', true );
+
+    // Only proceed if a sitecode exists.
+    if ( ! empty( $sitecode ) ) {
+
+        // Set up the query arguments.
+        $args = array(
+            'post_type'      => 'beforeafter',
+            'posts_per_page' => 4, // You can change this number
+            'post__not_in'   => array( $current_post_id ), // Exclude the current post
+            'meta_query'     => array(
+                array(
+                    'key'     => '_beforeafter_sitecode',
+                    'value'   => $sitecode,
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        $related_query = new WP_Query( $args );
+
+        // If we found related posts, display them.
+        if ( $related_query->have_posts() ) {
+            // Use the theme's existing HTML structure for the section.
+            echo '<div class="related-posts">';
+            echo '<div class="container my-10 lg:my-12">';
+            echo '<h3 class="block text-moss mb-4">Related Before & After Posts</h3>';
+            echo '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 ">';
+
+            while ( $related_query->have_posts() ) {
+                $related_query->the_post();
+                // Reuse the theme's template part for individual post styling.
+                get_template_part( 'template-parts/content/content-excerpt' );
+            }
+
+            echo '</div>'; // close .grid
+            echo '</div>'; // close .container
+            echo '</div>'; // close .related-posts
+        }
+
+        // Restore the original post data.
+        wp_reset_postdata();
+    }
+}

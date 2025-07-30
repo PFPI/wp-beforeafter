@@ -106,9 +106,13 @@ get_header(); ?>
                             <div class="beforeafter-data bg-beige rounded-lg p-5 border border-neutral-300">
                                 <h3 class="h3 text-moss font-display capitalize pb-5"><?php _e( 'Analysis Details', 'beforeafter' ); ?></h3>
                                 <ul class="list-none p-0 m-0">
-                                    <?php if ( ! empty( $sitecode ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Site Code:', 'beforeafter' ); ?></strong> <?php echo esc_html( $sitecode ); ?></li>
-                                    <?php endif; ?>
+                            <?php if ( ! empty( $sitecode ) ) : ?>
+                                <?php
+                                // Construct the search URL for the sitecode, pointing to the resources page.
+                                $search_url = site_url( '/resources/?_search=' . urlencode( $sitecode ) );
+                                ?>
+                                <li class="mb-2"><strong><?php _e( 'Site Code:', 'beforeafter' ); ?></strong> <a href="<?php echo esc_url( $search_url ); ?>" class="underline hover:no-underline"><?php echo esc_html( $sitecode ); ?></a></li>
+                            <?php endif; ?>
                                     <?php if ( ! empty( $latitude ) ) : ?>
                                         <li class="mb-2"><strong><?php _e( 'Latitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $latitude ); ?></li>
                                     <?php endif; ?>
@@ -134,7 +138,11 @@ get_header(); ?>
                     </div>
                 </div>
             </div>
-        </article><?php endwhile; // End of the loop. ?>
+        </article>
+        
+        <?php beforeafter_display_related_by_sitecode(); ?>
+        
+        <?php endwhile; // End of the loop. ?>
 
     </main></div><?php
 get_footer();
