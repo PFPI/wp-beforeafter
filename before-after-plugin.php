@@ -230,21 +230,12 @@ function beforeafter_add_meta_boxes() {
         'high'
     );
 
-    add_meta_box(
-        'beforeafter_sitecode',
-        __( 'Sitecode', 'beforeafter' ),
-        'beforeafter_sitecode_callback',
+add_meta_box(
+        'beforeafter_site_details',
+        __( 'Site Details', 'beforeafter' ),
+        'beforeafter_site_details_callback',
         'beforeafter',
-        'normal',
-        'high'
-    );
-
-    add_meta_box(
-        'beforeafter_sitename',
-        __( 'Sitename', 'beforeafter' ),
-        'beforeafter_sitename_callback',
-        'beforeafter',
-        'normal',
+        'side',
         'high'
     );
     
@@ -362,31 +353,24 @@ function beforeafter_location_data_callback( $post ) {
 }
 
 /**
- * Callback for the Sitecode meta box
+ * Callback for the Site Details meta box
  */
-function beforeafter_sitecode_callback( $post ) {
+function beforeafter_site_details_callback( $post ) {
     $sitecode = get_post_meta( $post->ID, '_beforeafter_sitecode', true );
+    $sitename = get_post_meta( $post->ID, '_beforeafter_sitename', true );
     ?>
     <p>
         <label for="beforeafter_sitecode"><?php _e( 'Sitecode:', 'beforeafter' ); ?></label>
         <input type="text" name="beforeafter_sitecode" id="beforeafter_sitecode" value="<?php echo esc_attr( $sitecode ); ?>" pattern="[a-zA-Z0-9]{9}" title="Please enter a 9-character alphanumeric code" />
-        <small><?php _e( 'Alphanumeric characters only.', 'beforeafter' ); ?></small>
     </p>
-    <?php
-}
-
-/**
- * Callback for the Sitename meta box
- */
-function beforeafter_sitename_callback( $post ) {
-    $sitename = get_post_meta( $post->ID, '_beforeafter_sitename', true );
-    ?>
     <p>
         <label for="beforeafter_sitename"><?php _e( 'Sitename:', 'beforeafter' ); ?></label>
         <input type="text" name="beforeafter_sitename" id="beforeafter_sitename" value="<?php echo esc_attr( $sitename ); ?>" />
     </p>
     <?php
 }
+
+
 
 /**
  * Callback for the GeoJSON meta box
