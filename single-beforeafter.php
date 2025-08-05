@@ -39,14 +39,15 @@ get_header(); ?>
             // --- NEW: Query for related Natura 2000 Site data ---
             $site_ha = '';
             $most_disturbed_year = '';
-            $total_disturbed_area = 0; // Initialize total disturbed area
+            $total_disturbed_area = 0;
+            $graph_data_points = []; // Initialize array for graph data
         
             if (!empty($sitecode)) {
                 $args = array(
                     'post_type' => 'natura_2000_site',
                     'title' => $sitecode,
                     'posts_per_page' => 1,
-                    'fields' => 'ids', // More efficient to only get IDs
+                    'fields' => 'ids',
                 );
 
                 $natura_query = new WP_Query($args);
@@ -56,19 +57,29 @@ get_header(); ?>
                     $site_ha = get_post_meta($natura_post_id, '_site_ha', true);
                     $most_disturbed_year = get_post_meta($natura_post_id, '_most_disturbed_year', true);
 
-                    // Loop through years 2001 to 2023 to sum up disturbed areas
+                    // Loop through years to build data for graph and calculate total
                     for ($year = 2001; $year <= 2023; $year++) {
                         $meta_key = '_area_ha_' . $year;
                         $yearly_area = get_post_meta($natura_post_id, $meta_key, true);
-                        if (is_numeric($yearly_area)) {
-                            $total_disturbed_area += (float) $yearly_area;
-                        }
+                        $yearly_area_float = is_numeric($yearly_area) ? (float) $yearly_area : 0;
+
+                        $total_disturbed_area += $yearly_area_float;
+
+                        // Add data point for the graph
+                        $graph_data_points[] = array(
+                            'x' => $year,
+                            'y' => $yearly_area_float
+                        );
                     }
+
+                    // Pass the prepared data to our graph script
+                    wp_localize_script('beforeafter-graph-js', 'beforeafter_graph_data', array(
+                        'points' => $graph_data_points,
+                        'sitename' => $sitename,
+                    ));
                 }
-                // Important to reset post data after a custom query
                 wp_reset_postdata();
             }
-
             ?>
 
             <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
@@ -174,10 +185,11 @@ get_header(); ?>
                                         <?php endif; ?>
                                     </ul>
                                 </div>
-                                                                <?php // --- Site Details Box --- ?>
+                                <?php // --- Site Details Box --- ?>
                                 <div class="site-details bg-beige rounded-lg p-5 border border-neutral-300 mb-5">
                                     <h3 class="h3 text-moss font-display capitalize pb-5">
-                                        <?php _e('Site Details', 'beforeafter'); ?></h3>
+                                        <?php _e('Site Details', 'beforeafter'); ?>
+                                    </h3>
                                     <ul class="list-none p-0 m-0">
                                         <?php if (!empty($sitecode)): ?>
                                             <?php
@@ -200,13 +212,21 @@ get_header(); ?>
                                         <?php if (!empty($most_disturbed_year)): ?>
                                             <li class="mb-2">
                                                 <strong><?php _e('Most Disturbed Year:', 'beforeafter'); ?></strong>
-                                                <?php echo esc_html($most_disturbed_year); ?></li>
+                                                <?php echo esc_html($most_disturbed_year); ?>
+                                            </li>
                                         <?php endif; ?>
                                         <?php if ($total_disturbed_area > 0): ?>
                                             <li class="mb-2">
                                                 <strong><?php _e('Total Disturbed Area (ha):', 'beforeafter'); ?></strong>
-                                                <?php echo number_format($total_disturbed_area, 2); ?></li>
-                                            <li class="mb-2"><i>The disturbed area is for the study period, 2001-2023. Not all areas are disturbed by logging.</i></li>
+                                                <?php echo number_format($total_disturbed_area, 2); ?>
+                                            </li>
+                                            <li class="mb-2"><i>The disturbed area is for the study period, 2001-2023. Not all
+                                                    areas are disturbed by logging.</i></li>
+                                        <?php endif; ?>
+                                        <?php // --- NEW: Graph Modal Button --- ?>
+                                        <?php if ($total_disturbed_area > 0): ?>
+                                            <button id="open-graph-modal"
+                                                class="button-primary mt-4 w-full"><?php _e('View Disturbance Graph', 'beforeafter'); ?></button>
                                         <?php endif; ?>
                                     </ul>
                                 </div>
@@ -222,5 +242,57 @@ get_header(); ?>
 
     </main>
 </div>
+
+<?php // --- NEW: Graph Modal and Styles --- ?>
+<style>
+    .graph-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.6);
+        align-items: center;
+        justify-content: center;
+    }
+    .graph-modal.is-visible {
+        display: flex;
+    }
+    .graph-modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 90%;
+        max-width: 800px;
+        border-radius: 8px;
+        position: relative;
+    }
+    .graph-modal-close {
+        color: #aaa;
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .graph-modal-close:hover,
+    .graph-modal-close:focus {
+        color: black;
+    }
+</style>
+
+<div id="disturbance-graph-modal" class="graph-modal">
+    <div class="graph-modal-content">
+        <span class="graph-modal-close">&times;</span>
+        <canvas id="disturbance-chart"></canvas>
+    </div>
+</div>
+
+</main></div>
 <?php
 get_footer();

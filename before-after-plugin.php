@@ -159,6 +159,24 @@ function beforeafter_enqueue_custom_slider_scripts() {
             'zoom' => $zoom_level,
             'geojson_url' => $geojson_file_url
         ));
+
+        // Enqueue Chart.js from a CDN
+        wp_enqueue_script(
+            'chart-js',
+            'https://cdn.jsdelivr.net/npm/chart.js',
+            array(),
+            '4.4.0', // Use a specific version for stability
+            true
+        );
+
+        // Enqueue our new custom graph script
+        wp_enqueue_script(
+            'beforeafter-graph-js',
+            plugin_dir_url( __FILE__ ) . 'before-after-graph.js',
+            array( 'chart-js' ), // Make it dependent on Chart.js
+            '1.0.0',
+            true
+        );
     }
 }
 add_action( 'wp_enqueue_scripts', 'beforeafter_enqueue_custom_slider_scripts' );
@@ -1205,47 +1223,45 @@ function natura_2000_handle_import() {
         // Process the CSV file
         $csv_file = $_FILES['csv_file']['tmp_name'];
         if (($handle = fopen($csv_file, "r")) !== FALSE) {
-            // Skip the header row
-            fgetcsv($handle, 1000, ",");
+            // --- NEW: Read header row to map column names to indexes ---
+            $header = fgetcsv($handle, 1000, ",");
+            $column_map = array_flip($header); // Creates an array like ['sitecode' => 1, 'site_ha' => 4, ...]
 
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                // Use the column map to get data by name, not by a fixed index
+                $sitecode = isset($column_map['sitecode']) ? $data[$column_map['sitecode']] : '';
+
+                if (empty($sitecode)) {
+                    continue; // Skip rows without a sitecode
+                }
+                
                 // Create new post
                 $new_post = array(
-                    'post_title'    => $data[1], // sitecode
+                    'post_title'    => $sitecode,
                     'post_type'     => 'natura_2000_site',
                     'post_status'   => 'publish',
                 );
 
                 $post_id = wp_insert_post($new_post);
 
-                // Add meta data
+                // Add meta data using the column map
                 if ($post_id) {
-                    update_post_meta($post_id, '_sitecode', $data[1]);
-                    update_post_meta($post_id, '_area_ha_2023', $data[3]);
-                    update_post_meta($post_id, '_area_ha_2022', $data[4]);
-                    update_post_meta($post_id, '_area_ha_2021', $data[5]);
-                    update_post_meta($post_id, '_area_ha_2020', $data[6]);
-                    update_post_meta($post_id, '_area_ha_2019', $data[7]);
-                    update_post_meta($post_id, '_area_ha_2018', $data[8]);
-                    update_post_meta($post_id, '_area_ha_2017', $data[9]);
-                    update_post_meta($post_id, '_area_ha_2016', $data[10]);
-                    update_post_meta($post_id, '_area_ha_2015', $data[11]);
-                    update_post_meta($post_id, '_area_ha_2014', $data[12]);
-                    update_post_meta($post_id, '_area_ha_2013', $data[13]);
-                    update_post_meta($post_id, '_area_ha_2012', $data[14]);
-                    update_post_meta($post_id, '_area_ha_2011', $data[15]);
-                    update_post_meta($post_id, '_area_ha_2010', $data[16]);
-                    update_post_meta($post_id, '_area_ha_2009', $data[17]);
-                    update_post_meta($post_id, '_area_ha_2008', $data[18]);
-                    update_post_meta($post_id, '_area_ha_2007', $data[19]);
-                    update_post_meta($post_id, '_area_ha_2006', $data[20]);
-                    update_post_meta($post_id, '_area_ha_2005', $data[21]);
-                    update_post_meta($post_id, '_area_ha_2004', $data[22]);
-                    update_post_meta($post_id, '_area_ha_2003', $data[23]);
-                    update_post_meta($post_id, '_area_ha_2002', $data[24]);
-                    update_post_meta($post_id, '_area_ha_2001', $data[25]);
-                    update_post_meta($post_id, '_site_ha', $data[26]);
-                    update_post_meta($post_id, '_most_disturbed_year', $data[27]);
+                    // Define all the fields we want to import
+                    $fields_to_import = array(
+                        'sitecode', 'countrycode', 'perclogged', 'site_ha', 'most_disturbed_year_ha', 'most_disturbed_year'
+                    );
+                    
+                    // Add all yearly disturbance fields
+                    for ($year = 2001; $year <= 2023; $year++) {
+                        $fields_to_import[] = 'area_ha_' . $year;
+                    }
+
+                    // Loop through the fields and update post meta if the column exists in the CSV
+                    foreach ($fields_to_import as $field) {
+                        if (isset($column_map[$field]) && isset($data[$column_map[$field]])) {
+                            update_post_meta($post_id, '_' . $field, sanitize_text_field($data[$column_map[$field]]));
+                        }
+                    }
                 }
             }
             fclose($handle);
