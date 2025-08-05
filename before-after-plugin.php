@@ -238,6 +238,15 @@ function beforeafter_add_meta_boxes() {
         'normal',
         'high'
     );
+
+    add_meta_box(
+        'beforeafter_sitename',
+        __( 'Sitename', 'beforeafter' ),
+        'beforeafter_sitename_callback',
+        'beforeafter',
+        'normal',
+        'high'
+    );
     
     add_meta_box(
         'beforeafter_geojson',
@@ -367,6 +376,19 @@ function beforeafter_sitecode_callback( $post ) {
 }
 
 /**
+ * Callback for the Sitename meta box
+ */
+function beforeafter_sitename_callback( $post ) {
+    $sitename = get_post_meta( $post->ID, '_beforeafter_sitename', true );
+    ?>
+    <p>
+        <label for="beforeafter_sitename"><?php _e( 'Sitename:', 'beforeafter' ); ?></label>
+        <input type="text" name="beforeafter_sitename" id="beforeafter_sitename" value="<?php echo esc_attr( $sitename ); ?>" />
+    </p>
+    <?php
+}
+
+/**
  * Callback for the GeoJSON meta box
  */
 function beforeafter_geojson_callback( $post ) {
@@ -473,6 +495,11 @@ function beforeafter_save_meta_data( $post_id ) {
         // First, trim whitespace, then sanitize the result.
         $sanitized_sitecode = sanitize_text_field( trim( $_POST['beforeafter_sitecode'] ) );
         update_post_meta( $post_id, '_beforeafter_sitecode', $sanitized_sitecode );
+    }
+
+    // Save Sitename
+    if ( isset( $_POST['beforeafter_sitename'] ) ) {
+        update_post_meta( $post_id, '_beforeafter_sitename', sanitize_text_field( $_POST['beforeafter_sitename'] ) );
     }
     
     // Save GeoJSON File ID
@@ -800,15 +827,16 @@ function beforeafter_handle_bulk_import() {
                 $before_date = $data[3];
                 $after_date = $data[4];
                 $sitecode = $data[5];
-                $latitude = $data[6];
-                $longitude = $data[7];
-                $zoom_level = $data[8];
-                $disturbed_date = $data[9];
-                $conclusion = $data[10];
-                $geojson_file_name = $data[11];
-                $location_name = $data[12];
+                $sitename = $data[6];
+                $latitude = $data[7];
+                $longitude = $data[8];
+                $zoom_level = $data[9];
+                $disturbed_date = $data[10];
+                $conclusion = $data[11];
+                $geojson_file_name = $data[12];
+                $location_name = $data[13];
 
-                $post_title = $sitecode . ' - ' . $site_id;
+                $post_title = $sitecode . ' - ' . $sitename;
 
                 $post_id = wp_insert_post([
                     'post_title'   => sanitize_text_field( $post_title ),
@@ -818,6 +846,7 @@ function beforeafter_handle_bulk_import() {
 
                 if ( $post_id ) {
                     update_post_meta( $post_id, '_beforeafter_sitecode', sanitize_text_field( $sitecode ) );
+                    update_post_meta( $post_id, '_beforeafter_sitename', sanitize_text_field( $sitename ) );
                     update_post_meta( $post_id, '_beforeafter_before_date', sanitize_text_field( $before_date ) );
                     update_post_meta( $post_id, '_beforeafter_after_date', sanitize_text_field( $after_date ) );
                     update_post_meta( $post_id, '_beforeafter_latitude', sanitize_text_field( $latitude ) );
@@ -946,7 +975,7 @@ function beforeafter_render_bulk_import_page() {
             <p><strong><?php _e( 'Instructions:', 'beforeafter' ); ?></strong></p>
             <ol style="list-style: decimal; padding-left: 20px;">
                 <li><?php printf( __( 'Upload your JPG and GeoJSON files to the following directory on your server using FTP or your hosting file manager: %s', 'beforeafter' ), '<code>' . esc_html( $import_dir_path ) . '</code>' ); ?></li>
-                <li><?php _e( 'Ensure your CSV file is formatted correctly and references the filenames you just uploaded.', 'beforeafter' ); ?></li>
+                <li><?php _e( 'Ensure your CSV file is formatted correctly with the columns in the following order: `site_id`, `before_image_name`, `after_image_name`, `before_date`, `after_date`, `sitecode`, `sitename`, `latitude`, `longitude`, `zoom_level`, `disturbed_date`, `conclusion`, `geojson_file_name`, and `location_name`. The file must also reference the filenames you just uploaded.', 'beforeafter' ); ?></li>
                 <li><?php _e( 'Upload your CSV file below and click "Start Import".', 'beforeafter' ); ?></li>
             </ol>
         </div>

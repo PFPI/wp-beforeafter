@@ -28,6 +28,7 @@ get_header(); ?>
         
         // Get all the project details
         $sitecode = get_post_meta( get_the_ID(), '_beforeafter_sitecode', true );
+        $sitename = get_post_meta( get_the_ID(), '_beforeafter_sitename', true );
         $latitude = get_post_meta( get_the_ID(), '_beforeafter_latitude', true );
         $longitude = get_post_meta( get_the_ID(), '_beforeafter_longitude', true );
         $zoom_level = get_post_meta( get_the_ID(), '_beforeafter_zoom_level', true );
@@ -59,14 +60,15 @@ get_header(); ?>
                                 if ( ! empty( $latitude ) && ! empty( $longitude ) && ! empty( $sitecode ) && ! empty( $disturbed_date ) && ! empty( $conclusion ) ) {
 
                                     // Build the formatted string
-                                    $point_information = sprintf(
-                                        '<strong>POINT INFORMATION:</strong> This point at %s, %s in %s was potentially disturbed in %s. After evaluation of satellite imagery, it was rated as %s.',
-                                        esc_html( $latitude ),
-                                        esc_html( $longitude ),
-                                        esc_html( $sitecode ),
-                                        esc_html( $disturbed_date ),
-                                        esc_html( $conclusion )
-                                    );
+                                $point_information = sprintf(
+                                    '<strong>POINT INFORMATION:</strong> This point at %s, %s in %s (%s) was potentially disturbed in %s. After evaluation of satellite imagery, it was rated as %s.',
+                                    esc_html( $latitude ),
+                                    esc_html( $longitude ),
+                                    esc_html( $sitecode ),
+                                    esc_html( $sitename ),
+                                    esc_html( $disturbed_date ),
+                                    esc_html( $conclusion )
+                                );
 
                                     // Display the final text inside a paragraph
                                     echo '<p>' . $point_information . '</p>';
@@ -113,24 +115,27 @@ get_header(); ?>
                                 ?>
                                 <li class="mb-2"><strong><?php _e( 'Site Code:', 'beforeafter' ); ?></strong> <a href="<?php echo esc_url( $search_url ); ?>" class="underline hover:no-underline"><?php echo esc_html( $sitecode ); ?></a></li>
                             <?php endif; ?>
-                                    <?php if ( ! empty( $latitude ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Latitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $latitude ); ?></li>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $longitude ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Longitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $longitude ); ?></li>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $before_image_label ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Before Date:', 'beforeafter' ); ?></strong> <?php echo esc_html( $before_image_label ); ?></li>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $disturbed_date ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Disturbed Year:', 'beforeafter' ); ?></strong> <?php echo esc_html( $disturbed_date ); ?></li>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $after_image_label ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'After Date:', 'beforeafter' ); ?></strong> <?php echo esc_html( $after_image_label ); ?></li>
-                                    <?php endif; ?>
-                                    <?php if ( ! empty( $conclusion ) ) : ?>
-                                        <li class="mb-2"><strong><?php _e( 'Conclusion:', 'beforeafter' ); ?></strong> <?php echo esc_html( $conclusion ); ?></li>
-                                    <?php endif; ?>
+                            <?php if ( ! empty( $sitename ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Sitename:', 'beforeafter' ); ?></strong> <?php echo esc_html( $sitename ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $latitude ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Latitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $latitude ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $longitude ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Longitude:', 'beforeafter' ); ?></strong> <?php echo esc_html( $longitude ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $before_image_label ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Before Date:', 'beforeafter' ); ?></strong> <?php echo esc_html( $before_image_label ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $disturbed_date ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Disturbed Year:', 'beforeafter' ); ?></strong> <?php echo esc_html( $disturbed_date ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $after_image_label ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'After Date:', 'beforeafter' ); ?></strong> <?php echo esc_html( $after_image_label ); ?></li>
+                            <?php endif; ?>
+                            <?php if ( ! empty( $conclusion ) ) : ?>
+                                <li class="mb-2"><strong><?php _e( 'Conclusion:', 'beforeafter' ); ?></strong> <?php echo esc_html( $conclusion ); ?></li>
+                            <?php endif; ?>
                                 </ul>
                             </div>
                             <?php endif; ?>
