@@ -999,3 +999,275 @@ function beforeafter_render_bulk_import_page() {
     </div>
     <?php
 }
+
+// Register Custom Post Type for Natura 2000 Sites
+function natura_2000_custom_post_type() {
+
+    $labels = array(
+        'name'                  => _x( 'Natura 2000 Sites', 'Post Type General Name', 'text_domain' ),
+        'singular_name'         => _x( 'Natura 2000 Site', 'Post Type Singular Name', 'text_domain' ),
+        'menu_name'             => __( 'Natura 2000 Sites', 'text_domain' ),
+        'name_admin_bar'        => __( 'Natura 2000 Site', 'text_domain' ),
+        'archives'              => __( 'Site Archives', 'text_domain' ),
+        'attributes'            => __( 'Site Attributes', 'text_domain' ),
+        'parent_item_colon'     => __( 'Parent Site:', 'text_domain' ),
+        'all_items'             => __( 'All Sites', 'text_domain' ),
+        'add_new_item'          => __( 'Add New Site', 'text_domain' ),
+        'add_new'               => __( 'Add New', 'text_domain' ),
+        'new_item'              => __( 'New Site', 'text_domain' ),
+        'edit_item'             => __( 'Edit Site', 'text_domain' ),
+        'update_item'           => __( 'Update Site', 'text_domain' ),
+        'view_item'             => __( 'View Site', 'text_domain' ),
+        'view_items'            => __( 'View Sites', 'text_domain' ),
+        'search_items'          => __( 'Search Site', 'text_domain' ),
+        'not_found'             => __( 'Not found', 'text_domain' ),
+        'not_found_in_trash'    => __( 'Not found in Trash', 'text_domain' ),
+        'featured_image'        => __( 'Featured Image', 'text_domain' ),
+        'set_featured_image'    => __( 'Set featured image', 'text_domain' ),
+        'remove_featured_image' => __( 'Remove featured image', 'text_domain' ),
+        'use_featured_image'    => __( 'Use as featured image', 'text_domain' ),
+        'insert_into_item'      => __( 'Insert into site', 'text_domain' ),
+        'uploaded_to_this_item' => __( 'Uploaded to this site', 'text_domain' ),
+        'items_list'            => __( 'Sites list', 'text_domain' ),
+        'items_list_navigation' => __( 'Sites list navigation', 'text_domain' ),
+        'filter_items_list'     => __( 'Filter sites list', 'text_domain' ),
+    );
+    $args = array(
+        'label'                 => __( 'Natura 2000 Site', 'text_domain' ),
+        'description'           => __( 'Custom post type for Natura 2000 sites', 'text_domain' ),
+        'labels'                => $labels,
+        'supports'              => array( 'title',  ),
+        'taxonomies'            => array( 'category', 'post_tag' ),
+        'hierarchical'          => false,
+        'public'                => true,
+        'show_ui'               => true,
+        'show_in_menu'          => true,
+        'menu_position'         => 5,
+        'show_in_admin_bar'     => true,
+        'show_in_nav_menus'     => true,
+        'can_export'            => true,
+        'has_archive'           => true,
+        'exclude_from_search'   => false,
+        'publicly_queryable'    => true,
+        'capability_type'       => 'page',
+    );
+    register_post_type( 'natura_2000_site', $args );
+
+}
+add_action( 'init', 'natura_2000_custom_post_type', 0 );
+
+// Add Meta Box to Natura 2000 Site CPT
+function natura_2000_add_meta_box() {
+    add_meta_box(
+        'natura_2000_site_details',
+        'Site Details',
+        'natura_2000_meta_box_callback',
+        'natura_2000_site'
+    );
+}
+add_action( 'add_meta_boxes', 'natura_2000_add_meta_box' );
+
+// Meta Box Callback
+function natura_2000_meta_box_callback( $post ) {
+    wp_nonce_field( 'natura_2000_save_meta_box_data', 'natura_2000_meta_box_nonce' );
+
+    $fields = array(
+        'sitecode',
+        'area_ha_2023',
+        'area_ha_2022',
+        'area_ha_2021',
+        'area_ha_2020',
+        'area_ha_2019',
+        'area_ha_2018',
+        'area_ha_2017',
+        'area_ha_2016',
+        'area_ha_2015',
+        'area_ha_2014',
+        'area_ha_2013',
+        'area_ha_2012',
+        'area_ha_2011',
+        'area_ha_2010',
+        'area_ha_2009',
+        'area_ha_2008',
+        'area_ha_2007',
+        'area_ha_2006',
+        'area_ha_2005',
+        'area_ha_2004',
+        'area_ha_2003',
+        'area_ha_2002',
+        'area_ha_2001',
+        'site_ha',
+        'most_disturbed_year'
+    );
+
+    foreach ( $fields as $field ) {
+        $value = get_post_meta( $post->ID, '_' . $field, true );
+        echo '<label for="' . $field . '_field">' . ucfirst( str_replace( '_', ' ', $field ) ) . ':</label>';
+        echo '<input type="text" id="' . $field . '_field" name="' . $field . '_field" value="' . esc_attr( $value ) . '" size="25" />';
+        echo '<br/><br/>';
+    }
+}
+
+// Save Meta Box Data
+function natura_2000_save_meta_box_data( $post_id ) {
+    if ( ! isset( $_POST['natura_2000_meta_box_nonce'] ) ) {
+        return;
+    }
+    if ( ! wp_verify_nonce( $_POST['natura_2000_meta_box_nonce'], 'natura_2000_save_meta_box_data' ) ) {
+        return;
+    }
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+    if ( isset( $_POST['post_type'] ) && 'natura_2000_site' == $_POST['post_type'] ) {
+        if ( ! current_user_can( 'edit_page', $post_id ) ) {
+            return;
+        }
+    } else {
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+    }
+
+    $fields = array(
+        'sitecode',
+        'area_ha_2023',
+        'area_ha_2022',
+        'area_ha_2021',
+        'area_ha_2020',
+        'area_ha_2019',
+        'area_ha_2018',
+        'area_ha_2017',
+        'area_ha_2016',
+        'area_ha_2015',
+        'area_ha_2014',
+        'area_ha_2013',
+        'area_ha_2012',
+        'area_ha_2011',
+        'area_ha_2010',
+        'area_ha_2009',
+        'area_ha_2008',
+        'area_ha_2007',
+        'area_ha_2006',
+        'area_ha_2005',
+        'area_ha_2004',
+        'area_ha_2003',
+        'area_ha_2002',
+        'area_ha_2001',
+        'site_ha',
+        'most_disturbed_year'
+    );
+
+    foreach ( $fields as $field ) {
+        if ( isset( $_POST[ $field . '_field' ] ) ) {
+            $data = sanitize_text_field( $_POST[ $field . '_field' ] );
+            update_post_meta( $post_id, '_' . $field, $data );
+        }
+    }
+}
+add_action( 'save_post', 'natura_2000_save_meta_box_data' );
+
+// Add submenu page for importing Natura 2000 sites
+function natura_2000_import_submenu_page() {
+    add_submenu_page(
+        'edit.php?post_type=natura_2000_site',
+        'Import Natura 2000 Sites',
+        'Import Sites',
+        'manage_options',
+        'natura-2000-import',
+        'natura_2000_import_page_callback'
+    );
+}
+add_action('admin_menu', 'natura_2000_import_submenu_page');
+
+// Callback function for the import page
+function natura_2000_import_page_callback() {
+    ?>
+    <div class="wrap">
+        <h1>Import Natura 2000 Sites</h1>
+        <form method="post" enctype="multipart/form-data">
+            <?php wp_nonce_field('natura_2000_import_nonce', 'natura_2000_import_nonce_field'); ?>
+            <p>
+                <label for="csv_file">Upload CSV file:</label>
+                <input type="file" id="csv_file" name="csv_file" accept=".csv">
+            </p>
+            <p>
+                <input type="submit" name="submit_import" class="button button-primary" value="Import">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+// Handle the CSV import
+function natura_2000_handle_import() {
+    if (isset($_POST['submit_import']) && isset($_FILES['csv_file'])) {
+        // Verify nonce
+        if (!isset($_POST['natura_2000_import_nonce_field']) || !wp_verify_nonce($_POST['natura_2000_import_nonce_field'], 'natura_2000_import_nonce')) {
+            wp_die('Security check failed.');
+        }
+
+        // Check for file upload errors
+        if ($_FILES['csv_file']['error'] > 0) {
+            wp_die('File upload error: ' . $_FILES['csv_file']['error']);
+        }
+
+        // Check if file is a CSV
+        $file_info = wp_check_filetype(basename($_FILES['csv_file']['name']));
+        if ($file_info['ext'] !== 'csv') {
+            wp_die('Please upload a valid CSV file.');
+        }
+
+        // Process the CSV file
+        $csv_file = $_FILES['csv_file']['tmp_name'];
+        if (($handle = fopen($csv_file, "r")) !== FALSE) {
+            // Skip the header row
+            fgetcsv($handle, 1000, ",");
+
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                // Create new post
+                $new_post = array(
+                    'post_title'    => $data[1], // sitecode
+                    'post_type'     => 'natura_2000_site',
+                    'post_status'   => 'publish',
+                );
+
+                $post_id = wp_insert_post($new_post);
+
+                // Add meta data
+                if ($post_id) {
+                    update_post_meta($post_id, '_sitecode', $data[1]);
+                    update_post_meta($post_id, '_area_ha_2023', $data[3]);
+                    update_post_meta($post_id, '_area_ha_2022', $data[4]);
+                    update_post_meta($post_id, '_area_ha_2021', $data[5]);
+                    update_post_meta($post_id, '_area_ha_2020', $data[6]);
+                    update_post_meta($post_id, '_area_ha_2019', $data[7]);
+                    update_post_meta($post_id, '_area_ha_2018', $data[8]);
+                    update_post_meta($post_id, '_area_ha_2017', $data[9]);
+                    update_post_meta($post_id, '_area_ha_2016', $data[10]);
+                    update_post_meta($post_id, '_area_ha_2015', $data[11]);
+                    update_post_meta($post_id, '_area_ha_2014', $data[12]);
+                    update_post_meta($post_id, '_area_ha_2013', $data[13]);
+                    update_post_meta($post_id, '_area_ha_2012', $data[14]);
+                    update_post_meta($post_id, '_area_ha_2011', $data[15]);
+                    update_post_meta($post_id, '_area_ha_2010', $data[16]);
+                    update_post_meta($post_id, '_area_ha_2009', $data[17]);
+                    update_post_meta($post_id, '_area_ha_2008', $data[18]);
+                    update_post_meta($post_id, '_area_ha_2007', $data[19]);
+                    update_post_meta($post_id, '_area_ha_2006', $data[20]);
+                    update_post_meta($post_id, '_area_ha_2005', $data[21]);
+                    update_post_meta($post_id, '_area_ha_2004', $data[22]);
+                    update_post_meta($post_id, '_area_ha_2003', $data[23]);
+                    update_post_meta($post_id, '_area_ha_2002', $data[24]);
+                    update_post_meta($post_id, '_area_ha_2001', $data[25]);
+                    update_post_meta($post_id, '_site_ha', $data[26]);
+                    update_post_meta($post_id, '_most_disturbed_year', $data[27]);
+                }
+            }
+            fclose($handle);
+
+            echo '<div class="updated"><p>Import complete!</p></div>';
+        }
+    }
+}
+add_action('admin_init', 'natura_2000_handle_import'); 
