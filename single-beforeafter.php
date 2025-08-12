@@ -55,6 +55,7 @@ get_header(); ?>
                 if ($natura_query->have_posts()) {
                     $natura_post_id = $natura_query->posts[0];
                     $site_ha = get_post_meta($natura_post_id, '_site_ha', true);
+                    $sitename = get_post_meta($natura_post_id, '_sitename', true);
                     $most_disturbed_year = get_post_meta($natura_post_id, '_most_disturbed_year', true);
 
                     // Loop through years to build data for graph and calculate total
@@ -107,8 +108,8 @@ get_header(); ?>
                                         // Build the formatted string
                                         $point_information = sprintf(
                                             '<strong>POINT INFORMATION:</strong> This point at %s, %s in %s (%s) was potentially disturbed in %s. After evaluation of satellite imagery, it was rated as %s.',
-                                            esc_html($latitude),
-                                            esc_html($longitude),
+                                            esc_html(number_format($latitude, 4)),
+                                            esc_html(number_format($longitude, 4)),
                                             esc_html($sitecode),
                                             esc_html($sitename),
                                             esc_html($disturbed_date),
@@ -220,8 +221,9 @@ get_header(); ?>
                                                 <strong><?php _e('Total Disturbed Area (ha):', 'beforeafter'); ?></strong>
                                                 <?php echo number_format($total_disturbed_area, 2); ?>
                                             </li>
-                                            <li class="mb-2"><i>The disturbed area is for the study period, 2001-2023. Not all
-                                                    areas are disturbed by logging.</i></li>
+                                            <li class="mb-2"><i>The disturbed area value is for the entire Natura 2000 site, 
+                                                including areas not pictured by aerial photography, in the years 2001-2023. Not all
+                                                    disturbance is from logging.</i></li>
                                         <?php endif; ?>
                                         <?php // --- NEW: Graph Modal Button --- ?>
                                         <?php if ($total_disturbed_area > 0): ?>
