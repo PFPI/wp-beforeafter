@@ -890,7 +890,7 @@ function beforeafter_handle_bulk_import()
                 $geojson_file_name = $data[12];
                 $location_name = $data[13];
 
-                $post_title = $sitecode . ' - ' . $sitename;
+                $post_title = $site_id;
 
                 // --- START: MODIFIED BLOCK ---
 // Default post date to current time
