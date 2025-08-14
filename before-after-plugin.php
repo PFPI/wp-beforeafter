@@ -16,91 +16,25 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * Register the custom post type 'beforeafter'
- */
-function beforeafter_register_post_type()
-{
-    $labels = array(
-        'name' => _x('Before & Afters', 'Post Type General Name', 'beforeafter'),
-        'singular_name' => _x('Before & After', 'Post Type Singular Name', 'beforeafter'),
-        'menu_name' => __('Before & Afters', 'beforeafter'),
-        'name_admin_bar' => __('Before & After', 'beforeafter'),
-        'archives' => __('Before & After Archives', 'beforeafter'),
-        'attributes' => __('Before & After Attributes', 'beforeafter'),
-        'parent_item_colon' => __('Parent Before & After:', 'beforeafter'),
-        'all_items' => __('All Before & Afters', 'beforeafter'),
-        'add_new_item' => __('Add New Before & After', 'beforeafter'),
-        'add_new' => __('Add New', 'beforeafter'),
-        'new_item' => __('New Before & After', 'beforeafter'),
-        'edit_item' => __('Edit Before & After', 'beforeafter'),
-        'update_item' => __('Update Before & After', 'beforeafter'),
-        'view_item' => __('View Before & After', 'beforeafter'),
-        'view_items' => __('View Before & Afters', 'beforeafter'),
-        'search_items' => __('Search Before & After', 'beforeafter'),
-        'not_found' => __('Not found', 'beforeafter'),
-        'not_found_in_trash' => __('Not found in Trash', 'beforeafter'),
-        'featured_image' => __('Featured Image', 'beforeafter'),
-        'set_featured_image' => __('Set featured image', 'beforeafter'),
-        'remove_featured_image' => __('Remove featured image', 'beforeafter'),
-        'use_featured_image' => __('Use as featured image', 'beforeafter'),
-        'insert_into_item' => __('Insert into Before & After', 'beforeafter'),
-        'uploaded_to_this_item' => __('Uploaded to this Before & After', 'beforeafter'),
-        'items_list' => __('Before & Afters list', 'beforeafter'),
-        'items_list_navigation' => __('Before & Afters list navigation', 'beforeafter'),
-        'filter_items_list' => __('Filter Before & Afters list', 'beforeafter'),
-    );
-    $args = array(
-        'label' => __('Before & After', 'beforeafter'),
-        'description' => __('Custom post type for Before & After images', 'beforeafter'),
-        'labels' => $labels,
-        'supports' => array('title', 'thumbnail'),
-        'hierarchical' => false,
-        'public' => true,
-        'show_ui' => true,
-        'show_in_menu' => true,
-        'menu_position' => 5,
-        'menu_icon' => 'dashicons-images-alt2', // You can choose a different icon
-        'show_in_admin_bar' => true,
-        'show_in_nav_menus' => true,
-        'can_export' => true,
-        'has_archive' => true,
-        'exclude_from_search' => false,
-        'publicly_queryable' => true,
-        'capability_type' => 'post',
-        'show_in_rest' => true, // Enable for Gutenberg editor and REST API
-    );
-    register_post_type('beforeafter', $args);
-}
-add_action('init', 'beforeafter_register_post_type', 0);
 
-/**
- * Link 'beforeafter' custom post type to 'location' taxonomy.
- */
-function beforeafter_add_taxonomy_support()
-{
-    register_taxonomy_for_object_type('location', 'beforeafter');
-    register_taxonomy_for_object_type('type', 'beforeafter');
-}
-add_action('init', 'beforeafter_add_taxonomy_support');
+// Include the CPT functions
+require_once plugin_dir_path(__FILE__) . 'includes/custom-post-types.php';
 
-/**
- * Include custom archive template from plugin directory.
- */
-function beforeafter_archive_template($template)
-{
-    if (is_post_type_archive('beforeafter')) {
-        $new_template = plugin_dir_path(__FILE__) . 'archive-beforeafter.php';
-        if (file_exists($new_template)) {
-            return $new_template;
-        }
-    }
-    return $template;
-}
-add_filter('template_include', 'beforeafter_archive_template');
+// Include the Taxonomy functions
+require_once plugin_dir_path(__FILE__) . 'includes/custom-taxonomies.php';
+
+// Include the Archive template function
+require_once plugin_dir_path(__FILE__) . 'includes/beforeafter-display.php';
+
+// Include helpers for beforeafter post type
+require_once plugin_dir_path(__FILE__) . 'includes/beforeafter-helpers.php';
+
+// Add beforeafter and n2k trash functions
+require_once plugin_dir_path(__FILE__) . 'includes/beforeafter-trash.php';
 
 /**
  * Enqueue custom before/after slider CSS and JS for single 'beforeafter' posts.
+ * This function must stay in this file for the sliders to work.
  */
 function beforeafter_enqueue_custom_slider_scripts()
 {
@@ -188,6 +122,7 @@ add_action('wp_enqueue_scripts', 'beforeafter_enqueue_custom_slider_scripts');
 
 /**
  * Filter image attributes to prevent lazy loading on custom slider images.
+ * This function needs to be in this file to ensure it works correctly with the slider.
  * This is crucial to ensure images load immediately for the slider.
  */
 function beforeafter_filter_custom_slider_image_attributes($attr, $attachment, $size)
@@ -222,404 +157,12 @@ function beforeafter_filter_custom_slider_image_attributes($attr, $attachment, $
 add_filter('wp_get_attachment_image_attributes', 'beforeafter_filter_custom_slider_image_attributes', 10, 3);
 
 
-/**
- * Add custom meta boxes for Before & After images and data
- */
-function beforeafter_add_meta_boxes()
-{
-    add_meta_box(
-        'beforeafter_images',
-        __('Before & After Images', 'beforeafter'),
-        'beforeafter_images_callback',
-        'beforeafter',
-        'normal',
-        'high'
-    );
 
-    add_meta_box(
-        'beforeafter_dates', // New meta box for dates
-        __('Before & After Dates', 'beforeafter'),
-        'beforeafter_dates_callback',
-        'beforeafter',
-        'normal',
-        'high'
-    );
-
-    add_meta_box(
-        'beforeafter_location_data',
-        __('Location Data', 'beforeafter'),
-        'beforeafter_location_data_callback',
-        'beforeafter',
-        'normal',
-        'high'
-    );
-
-    add_meta_box(
-        'beforeafter_site_details',
-        __('Site Details', 'beforeafter'),
-        'beforeafter_site_details_callback',
-        'beforeafter',
-        'side',
-        'high'
-    );
-
-    add_meta_box(
-        'beforeafter_geojson',
-        __('GeoJSON File', 'beforeafter'),
-        'beforeafter_geojson_callback',
-        'beforeafter',
-        'normal',
-        'high'
-    );
-}
-add_action('add_meta_boxes', 'beforeafter_add_meta_boxes');
-
-/**
- * Callback for the Images meta box
- */
-function beforeafter_images_callback($post)
-{
-    wp_nonce_field(basename(__FILE__), 'beforeafter_nonce');
-
-    $before_image_id = get_post_meta($post->ID, '_beforeafter_before_image_id', true);
-    $after_image_id = get_post_meta($post->ID, '_beforeafter_after_image_id', true);
-
-    $before_image_url = $before_image_id ? wp_get_attachment_url($before_image_id) : '';
-    $after_image_url = $after_image_id ? wp_get_attachment_url($after_image_id) : '';
-    ?>
-    <div class="beforeafter-meta-row">
-        <p>
-            <label for="beforeafter_before_image"><?php _e('Before Image:', 'beforeafter'); ?></label><br>
-            <input type="hidden" name="beforeafter_before_image_id" id="beforeafter_before_image_id"
-                value="<?php echo esc_attr($before_image_id); ?>" />
-            <img id="beforeafter_before_image_preview" src="<?php echo esc_url($before_image_url); ?>"
-                style="max-width:200px; height:auto; <?php echo empty($before_image_url) ? 'display:none;' : ''; ?>" /><br>
-            <button type="button" class="button beforeafter_upload_image_button"
-                data-field="before_image"><?php _e('Select Before Image', 'beforeafter'); ?></button>
-            <button type="button" class="button beforeafter_remove_image_button" data-field="before_image"
-                style="<?php echo empty($before_image_url) ? 'display:none;' : ''; ?>"><?php _e('Remove Before Image', 'beforeafter'); ?></button>
-        </p>
-    </div>
-
-    <div class="beforeafter-meta-row">
-        <p>
-            <label for="beforeafter_after_image"><?php _e('After Image:', 'beforeafter'); ?></label><br>
-            <input type="hidden" name="beforeafter_after_image_id" id="beforeafter_after_image_id"
-                value="<?php echo esc_attr($after_image_id); ?>" />
-            <img id="beforeafter_after_image_preview" src="<?php echo esc_url($after_image_url); ?>"
-                style="max-width:200px; height:auto; <?php echo empty($after_image_url) ? 'display:none;' : ''; ?>" /><br>
-            <button type="button" class="button beforeafter_upload_image_button"
-                data-field="after_image"><?php _e('Select After Image', 'beforeafter'); ?></button>
-            <button type="button" class="button beforeafter_remove_image_button" data-field="after_image"
-                style="<?php echo empty($after_image_url) ? 'display:none;' : ''; ?>"><?php _e('Remove After Image', 'beforeafter'); ?></button>
-        </p>
-    </div>
-    <?php
-}
-
-/**
- * Callback for the Before & After Dates meta box
- */
-function beforeafter_dates_callback($post)
-{
-    $before_date = get_post_meta($post->ID, '_beforeafter_before_date', true);
-    $after_date = get_post_meta($post->ID, '_beforeafter_after_date', true);
-    ?>
-    <p>
-        <label for="beforeafter_before_date"><?php _e('Before Date (Text):', 'beforeafter'); ?></label>
-        <input type="text" name="beforeafter_before_date" id="beforeafter_before_date"
-            value="<?php echo esc_attr($before_date); ?>" class="large-text" pattern="\d{4}-\d{2}"
-            title="Please use the format YYYY-MM" />
-        <small><?php _e('e.g., 2010, Spring 2015, January 2020', 'beforeafter'); ?></small>
-    </p>
-    <p>
-        <label for="beforeafter_disturbed_date"><?php _e('Disturbed Date (Text):', 'beforeafter'); ?></label>
-        <input type="text" name="beforeafter_disturbed_date" id="beforeafter_disturbed_date"
-            value="<?php echo esc_attr(get_post_meta($post->ID, '_beforeafter_disturbed_date', true)); ?>"
-            class="large-text" pattern="\d{4}" title="Please use the format YYYY" />
-        <small><?php _e('e.g., 2018, Summer 2019, March 2021', 'beforeafter'); ?></small>
-    </p>
-    <p>
-        <label for="beforeafter_after_date"><?php _e('After Date (Text):', 'beforeafter'); ?></label>
-        <input type="text" name="beforeafter_after_date" id="beforeafter_after_date"
-            value="<?php echo esc_attr($after_date); ?>" class="large-text" />
-        <small><?php _e('e.g., 2020, Fall 2022, December 2023', 'beforeafter'); ?></small>
-    </p>
-    <p>
-        <label for="beforeafter_conclusion"><?php _e('Conclusion:', 'beforeafter'); ?></label>
-        <select name="beforeafter_conclusion" id="beforeafter_conclusion" class="large-text">
-            <?php
-            $current_conclusion = get_post_meta($post->ID, '_beforeafter_conclusion', true);
-            $options = array(
-                'Probable Clearcut',
-                'Probable Thinning',
-                'False Positive',
-                'Fire',
-                'Undeterminable',
-            );
-
-            foreach ($options as $option) {
-                echo '<option value="' . esc_attr($option) . '"' . selected($current_conclusion, $option, false) . '>' . esc_html($option) . '</option>';
-            }
-            ?>
-        </select>
-    </p>
-    <?php
-}
-
-
-/**
- * Callback for the Location Data meta box
- */
-function beforeafter_location_data_callback($post)
-{
-    $latitude = get_post_meta($post->ID, '_beforeafter_latitude', true);
-    $longitude = get_post_meta($post->ID, '_beforeafter_longitude', true);
-    $zoom_level = get_post_meta($post->ID, '_beforeafter_zoom_level', true);
-    ?>
-    <p>
-        <label for="beforeafter_latitude"><?php _e('Latitude:', 'beforeafter'); ?></label>
-        <input type="number" step="any" name="beforeafter_latitude" id="beforeafter_latitude"
-            value="<?php echo esc_attr($latitude); ?>" />
-    </p>
-    <p>
-        <label for="beforeafter_longitude"><?php _e('Longitude:', 'beforeafter'); ?></label>
-        <input type="number" step="any" name="beforeafter_longitude" id="beforeafter_longitude"
-            value="<?php echo esc_attr($longitude); ?>" />
-    </p>
-    <p>
-        <label for="beforeafter_zoom_level"><?php _e('Zoom Level:', 'beforeafter'); ?></label>
-        <input type="number" name="beforeafter_zoom_level" id="beforeafter_zoom_level"
-            value="<?php echo esc_attr($zoom_level); ?>" min="0" max="21" />
-    </p>
-    <?php
-}
-
-/**
- * Callback for the Site Details meta box
- */
-function beforeafter_site_details_callback($post)
-{
-    $sitecode = get_post_meta($post->ID, '_beforeafter_sitecode', true);
-    $sitename = get_post_meta($post->ID, '_beforeafter_sitename', true);
-    ?>
-    <p>
-        <label for="beforeafter_sitecode"><?php _e('Sitecode:', 'beforeafter'); ?></label>
-        <input type="text" name="beforeafter_sitecode" id="beforeafter_sitecode"
-            value="<?php echo esc_attr($sitecode); ?>" pattern="[a-zA-Z0-9]{9}"
-            title="Please enter a 9-character alphanumeric code" />
-    </p>
-    <p>
-        <label for="beforeafter_sitename"><?php _e('Sitename:', 'beforeafter'); ?></label>
-        <input type="text" name="beforeafter_sitename" id="beforeafter_sitename"
-            value="<?php echo esc_attr($sitename); ?>" />
-    </p>
-    <?php
-}
-
-
-
-/**
- * Callback for the GeoJSON meta box
- */
-function beforeafter_geojson_callback($post)
-{
-    $geojson_file_id = get_post_meta($post->ID, '_beforeafter_geojson_file_id', true);
-    $geojson_file_url = $geojson_file_id ? wp_get_attachment_url($geojson_file_id) : '';
-    ?>
-    <p>
-        <label for="beforeafter_geojson_file"><?php _e('GeoJSON File:', 'beforeafter'); ?></label><br>
-        <input type="hidden" name="beforeafter_geojson_file_id" id="beforeafter_geojson_file_id"
-            value="<?php echo esc_attr($geojson_file_id); ?>" />
-        <span id="beforeafter_geojson_file_name"><?php echo esc_html(basename($geojson_file_url)); ?></span><br>
-        <button type="button" class="button beforeafter_upload_file_button"
-            data-field="geojson_file"><?php _e('Select GeoJSON File', 'beforeafter'); ?></button>
-        <button type="button" class="button beforeafter_remove_file_button" data-field="geojson_file"
-            style="<?php echo empty($geojson_file_url) ? 'display:none;' : ''; ?>"><?php _e('Remove GeoJSON File', 'beforeafter'); ?></button>
-    </p>
-    <?php
-}
-
-/**
- * Save custom meta data
- */
-function beforeafter_save_meta_data($post_id)
-{
-    // Check if our nonce is set.
-    if (!isset($_POST['beforeafter_nonce'])) {
-        return $post_id;
-    }
-
-    // Verify that the nonce is valid.
-    if (!wp_verify_nonce($_POST['beforeafter_nonce'], basename(__FILE__))) {
-        return $post_id;
-    }
-
-    // If this is an autosave, our form has not been submitted, so we don't want to do anything.
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        return $post_id;
-    }
-
-    // Check the user's permissions.
-    if ('beforeafter' == $_POST['post_type']) {
-        if (!current_user_can('edit_post', $post_id)) {
-            return $post_id;
-        }
-    } else {
-        return $post_id;
-    }
-
-    // Save Before Image ID
-    if (isset($_POST['beforeafter_before_image_id'])) {
-        update_post_meta($post_id, '_beforeafter_before_image_id', sanitize_text_field($_POST['beforeafter_before_image_id']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_before_image_id');
-    }
-
-    // Save After Image ID
-    if (isset($_POST['beforeafter_after_image_id'])) {
-        update_post_meta($post_id, '_beforeafter_after_image_id', sanitize_text_field($_POST['beforeafter_after_image_id']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_after_image_id');
-    }
-
-    // Save Before Date
-    if (isset($_POST['beforeafter_before_date'])) {
-        update_post_meta($post_id, '_beforeafter_before_date', sanitize_text_field($_POST['beforeafter_before_date']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_before_date');
-    }
-
-    // Save After Date
-    if (isset($_POST['beforeafter_after_date'])) {
-        update_post_meta($post_id, '_beforeafter_after_date', sanitize_text_field($_POST['beforeafter_after_date']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_after_date');
-    }
-
-    // Save Disturbed Date
-    if (isset($_POST['beforeafter_disturbed_date'])) {
-        update_post_meta($post_id, '_beforeafter_disturbed_date', sanitize_text_field($_POST['beforeafter_disturbed_date']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_disturbed_date');
-    }
-
-    // Save Conclusion
-    if (isset($_POST['beforeafter_conclusion'])) {
-        update_post_meta($post_id, '_beforeafter_conclusion', sanitize_text_field($_POST['beforeafter_conclusion']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_conclusion');
-    }
-
-    // Save Latitude
-    if (isset($_POST['beforeafter_latitude'])) {
-        update_post_meta($post_id, '_beforeafter_latitude', sanitize_text_field($_POST['beforeafter_latitude']));
-    }
-
-    // Save Longitude
-    if (isset($_POST['beforeafter_longitude'])) {
-        update_post_meta($post_id, '_beforeafter_longitude', sanitize_text_field($_POST['beforeafter_longitude']));
-    }
-
-    // Save Zoom Level
-    if (isset($_POST['beforeafter_zoom_level'])) {
-        update_post_meta($post_id, '_beforeafter_zoom_level', sanitize_text_field($_POST['beforeafter_zoom_level']));
-    }
-
-    // Save Sitecode
-    if (isset($_POST['beforeafter_sitecode'])) {
-        // First, trim whitespace, then sanitize the result.
-        $sanitized_sitecode = sanitize_text_field(trim($_POST['beforeafter_sitecode']));
-        update_post_meta($post_id, '_beforeafter_sitecode', $sanitized_sitecode);
-    }
-
-    // Save Sitename
-    if (isset($_POST['beforeafter_sitename'])) {
-        update_post_meta($post_id, '_beforeafter_sitename', sanitize_text_field($_POST['beforeafter_sitename']));
-    }
-
-    // Save GeoJSON File ID
-    if (isset($_POST['beforeafter_geojson_file_id'])) {
-        update_post_meta($post_id, '_beforeafter_geojson_file_id', sanitize_text_field($_POST['beforeafter_geojson_file_id']));
-    } else {
-        delete_post_meta($post_id, '_beforeafter_geojson_file_id');
-    }
-    // --- NEW: Set Default Taxonomy Term ---
-// Always assign the 'Logging Photos' term to this post on save.
-    wp_set_object_terms($post_id, 'logging-photos', 'type');
-
-    // --- NEW: Set Post Date from After Date ---
-// Check if the After Date is set and has the correct format.
-    if (isset($_POST['beforeafter_after_date']) && !empty($_POST['beforeafter_after_date'])) {
-        $after_date_value = sanitize_text_field($_POST['beforeafter_after_date']);
-
-        // Validate the YYYY-MM format before proceeding.
-        if (preg_match('/^\d{4}-\d{2}$/', $after_date_value)) {
-            // Construct the full date string for the first day of that month.
-            $new_post_date = $after_date_value . '-01 00:00:00';
-
-            // Prepare the data for updating the post.
-            $post_data = array(
-                'ID' => $post_id,
-                'post_date' => $new_post_date,
-                'post_date_gmt' => get_gmt_from_date($new_post_date),
-                'edit_date' => true, // Required to signal an edit
-            );
-
-            // To prevent an infinite loop, we must unhook our save function before updating the post.
-            remove_action('save_post', 'beforeafter_save_meta_data', 10, 3);
-
-            // Update the post with the new date.
-            wp_update_post($post_data);
-
-            // Re-hook our function so it runs on the next save.
-            add_action('save_post', 'beforeafter_save_meta_data', 10, 3);
-        }
-    }
-
-
-    // --- NEW: Set Featured Image ---
-// ... (your existing featured image code) ...
-    // --- NEW: Set Featured Image ---
-// Automatically set the 'After' image as the featured image.
-    if (isset($_POST['beforeafter_after_image_id'])) {
-        $after_image_id = sanitize_text_field($_POST['beforeafter_after_image_id']);
-        if (!empty($after_image_id)) {
-            // This function sets the post's featured image.
-            set_post_thumbnail($post_id, $after_image_id);
-        }
-    }
-}
-add_action('save_post', 'beforeafter_save_meta_data');
-
-/**
- * Enqueue scripts for media uploader and custom meta box logic
- */
-function beforeafter_admin_scripts($hook)
-{
-    $screen = get_current_screen(); // Get the current screen object
-
-    // Check if we are on the post edit screen or new post screen for 'beforeafter' CPT
-    // This is a more reliable way to ensure scripts load only for our custom post type edit pages.
-    if (('post.php' == $hook || 'post-new.php' == $hook) && 'beforeafter' === $screen->post_type) {
-        // Enqueue WordPress media uploader scripts
-        wp_enqueue_media();
-
-        // Enqueue custom script for image selection
-        wp_enqueue_script(
-            'beforeafter-admin-script',
-            plugin_dir_url(__FILE__) . 'before-after-admin.js',
-            array('jquery'),
-            '1.0',
-            true
-        );
-    }
-}
-add_action('admin_enqueue_scripts', 'beforeafter_admin_scripts');
 
 /**
  * Frontend template for 'beforeafter' custom post type
  * This function will be called if a single 'beforeafter' post is viewed.
+ * This one must stay for some reason.
  * You can customize the output here.
  */
 function beforeafter_single_template($template)
@@ -893,7 +436,7 @@ function beforeafter_handle_bulk_import()
                 $post_title = $site_id;
 
                 // --- START: MODIFIED BLOCK ---
-// Default post date to current time
+                // Default post date to current time
                 $post_date = current_time('mysql');
 
                 // If after_date exists and is in YYYY-MM format, use it.
@@ -998,20 +541,24 @@ function beforeafter_handle_bulk_import()
 
             if (!empty($import_successes)) {
                 add_action('admin_notices', function () use ($import_successes) {
-                    echo '<div class="notice notice-success is-dismissible"><p>' . implode('<br>', $import_successes) . '</p></div>'; });
+                    echo '<div class="notice notice-success is-dismissible"><p>' . implode('<br>', $import_successes) . '</p></div>';
+                });
             }
             if (!empty($import_warnings)) {
                 add_action('admin_notices', function () use ($import_warnings) {
-                    echo '<div class="notice notice-warning is-dismissible"><p>' . implode('<br>', $import_warnings) . '</p></div>'; });
+                    echo '<div class="notice notice-warning is-dismissible"><p>' . implode('<br>', $import_warnings) . '</p></div>';
+                });
             }
 
         } else {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-error is-dismissible"><p>' . __('Could not open the CSV file.', 'beforeafter') . '</p></div>'; });
+                echo '<div class="notice notice-error is-dismissible"><p>' . __('Could not open the CSV file.', 'beforeafter') . '</p></div>';
+            });
         }
     } else {
         add_action('admin_notices', function () {
-            echo '<div class="notice notice-error is-dismissible"><p>' . __('Please upload a CSV file.', 'beforeafter') . '</p></div>'; });
+            echo '<div class="notice notice-error is-dismissible"><p>' . __('Please upload a CSV file.', 'beforeafter') . '</p></div>';
+        });
     }
 }
 add_action('admin_init', 'beforeafter_handle_bulk_import');
@@ -1082,62 +629,7 @@ function beforeafter_render_bulk_import_page()
     <?php
 }
 
-// Register Custom Post Type for Natura 2000 Sites
-function natura_2000_custom_post_type()
-{
 
-    $labels = array(
-        'name' => _x('Natura 2000 Sites', 'Post Type General Name', 'text_domain'),
-        'singular_name' => _x('Natura 2000 Site', 'Post Type Singular Name', 'text_domain'),
-        'menu_name' => __('Natura 2000 Sites', 'text_domain'),
-        'name_admin_bar' => __('Natura 2000 Site', 'text_domain'),
-        'archives' => __('Site Archives', 'text_domain'),
-        'attributes' => __('Site Attributes', 'text_domain'),
-        'parent_item_colon' => __('Parent Site:', 'text_domain'),
-        'all_items' => __('All Sites', 'text_domain'),
-        'add_new_item' => __('Add New Site', 'text_domain'),
-        'add_new' => __('Add New', 'text_domain'),
-        'new_item' => __('New Site', 'text_domain'),
-        'edit_item' => __('Edit Site', 'text_domain'),
-        'update_item' => __('Update Site', 'text_domain'),
-        'view_item' => __('View Site', 'text_domain'),
-        'view_items' => __('View Sites', 'text_domain'),
-        'search_items' => __('Search Site', 'text_domain'),
-        'not_found' => __('Not found', 'text_domain'),
-        'not_found_in_trash' => __('Not found in Trash', 'text_domain'),
-        'featured_image' => __('Featured Image', 'text_domain'),
-        'set_featured_image' => __('Set featured image', 'text_domain'),
-        'remove_featured_image' => __('Remove featured image', 'text_domain'),
-        'use_featured_image' => __('Use as featured image', 'text_domain'),
-        'insert_into_item' => __('Insert into site', 'text_domain'),
-        'uploaded_to_this_item' => __('Uploaded to this site', 'text_domain'),
-        'items_list' => __('Sites list', 'text_domain'),
-        'items_list_navigation' => __('Sites list navigation', 'text_domain'),
-        'filter_items_list' => __('Filter sites list', 'text_domain'),
-    );
-    $args = array(
-        'label' => __('Natura 2000 Site', 'text_domain'),
-        'description' => __('Custom post type for Natura 2000 sites', 'text_domain'),
-        'labels' => $labels,
-        'supports' => array('title', ),
-        'taxonomies' => array('category', 'post_tag'),
-        'hierarchical' => false,
-        'public' => true,
-        'show_ui' => true,
-        'show_in_menu' => true,
-        'menu_position' => 5,
-        'show_in_admin_bar' => true,
-        'show_in_nav_menus' => true,
-        'can_export' => true,
-        'has_archive' => true,
-        'exclude_from_search' => false,
-        'publicly_queryable' => true,
-        'capability_type' => 'page',
-    );
-    register_post_type('natura_2000_site', $args);
-
-}
-add_action('init', 'natura_2000_custom_post_type', 0);
 
 // Add Meta Box to Natura 2000 Site CPT
 function natura_2000_add_meta_box()
@@ -1366,269 +858,3 @@ function natura_2000_handle_import()
     }
 }
 add_action('admin_init', 'natura_2000_handle_import');
-
-
-/**
- * Adds a 'Move All to Trash' button on the Natura 2000 Sites admin list page for administrators.
- */
-function natura_2000_add_bulk_trash_button()
-{
-    $screen = get_current_screen();
-    if ('edit-natura_2000_site' !== $screen->id) {
-        return;
-    }
-
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-
-    $nonce = wp_create_nonce('beforeafter_bulk_trash_natura_sites_nonce');
-    $trash_url = add_query_arg(array(
-        'action' => 'beforeafter_bulk_trash_natura_sites',
-        '_wpnonce' => $nonce,
-    ), admin_url('admin.php'));
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function ($) {
-            $('.bulkactions').append(
-                '<a href="<?php echo esc_url($trash_url); ?>" id="doaction_trash_all" class="button action" style="margin-left: 5px;"><?php _e('Move All to Trash', 'beforeafter'); ?></a>'
-            );
-
-            $('#doaction_trash_all').on('click', function (e) {
-                if (!confirm('<?php _e('Are you sure you want to move all Natura 2000 Sites to the trash? This will be done in the background and may take some time.', 'beforeafter'); ?>')) {
-                    e.preventDefault();
-                } else {
-                    $(this).text('<?php _e('Trashing...', 'beforeafter'); ?>').prop('disabled', true);
-                }
-            });
-        });
-    </script>
-    <?php
-}
-add_action('admin_footer-edit.php', 'natura_2000_add_bulk_trash_button');
-
-/**
- * Handles the logic for initiating the bulk trashing of 'natura_2000_site' posts.
- */
-function natura_2000_handle_bulk_trash()
-{
-    check_admin_referer('beforeafter_bulk_trash_natura_sites_nonce');
-
-    if (!current_user_can('manage_options')) {
-        wp_die(__('You do not have sufficient permissions to perform this action.', 'beforeafter'));
-    }
-
-    $all_posts = get_posts(array(
-        'post_type' => 'natura_2000_site',
-        'posts_per_page' => -1,
-        'fields' => 'ids',
-        'post_status' => 'any', // Get all statuses except trash
-    ));
-
-    if (!empty($all_posts)) {
-        // Store the list of post IDs in a transient to be processed in the background
-        set_transient('natura_2000_bulk_trash_ids', $all_posts, HOUR_IN_SECONDS);
-
-        // Schedule an immediate, one-off event to start the processing
-        wp_schedule_single_event(time(), 'natura_2000_process_trash_batch_hook');
-
-        // Set a transient to show the "started" notice
-        set_transient('natura_2000_trash_notice', 'started', 60);
-    }
-
-    // Redirect back to the admin page
-    wp_redirect(admin_url('edit.php?post_type=natura_2000_site'));
-    exit;
-}
-add_action('admin_action_beforeafter_bulk_trash_natura_sites', 'natura_2000_handle_bulk_trash');
-
-/**
- * Processes a single batch of 'natura_2000_site' posts to be trashed.
- * This is triggered by a WP-Cron event.
- */
-function natura_2000_process_trash_batch()
-{
-    $post_ids = get_transient('natura_2000_bulk_trash_ids');
-
-    if (empty($post_ids)) {
-        // Job is done, set a notice and finish
-        set_transient('natura_2000_trash_notice', 'completed', 60);
-        return;
-    }
-
-    // Process a batch of 50 posts at a time to prevent timeouts
-    $batch_size = 50;
-    $ids_to_trash = array_splice($post_ids, 0, $batch_size);
-
-    foreach ($ids_to_trash as $post_id) {
-        wp_trash_post($post_id);
-    }
-
-    if (!empty($post_ids)) {
-        // If there are more posts, update the transient and reschedule the next batch
-        set_transient('natura_2000_bulk_trash_ids', $post_ids, HOUR_IN_SECONDS);
-        wp_schedule_single_event(time() + 2, 'natura_2000_process_trash_batch_hook');
-    } else {
-        // If this was the last batch, delete the transient and set the completed notice
-        delete_transient('natura_2000_bulk_trash_ids');
-        set_transient('natura_2000_trash_notice', 'completed', 60);
-    }
-}
-add_action('natura_2000_process_trash_batch_hook', 'natura_2000_process_trash_batch');
-
-/**
- * Displays admin notices for the bulk trash process.
- */
-function natura_2000_trash_admin_notices()
-{
-    $notice = get_transient('natura_2000_trash_notice');
-
-    if (!$notice) {
-        return;
-    }
-
-    if ('started' === $notice) {
-        echo '<div class="notice notice-info is-dismissible"><p>' . __('Started moving all Natura 2000 Sites to the trash. This will happen in the background.', 'beforeafter') . '</p></div>';
-    } elseif ('completed' === $notice) {
-        echo '<div class="notice notice-success is-dismissible"><p>' . __('Successfully moved all Natura 2000 Sites to the trash.', 'beforeafter') . '</p></div>';
-    }
-
-    // Delete the transient so the notice doesn't show again
-    delete_transient('natura_2000_trash_notice');
-}
-add_action('admin_notices', 'natura_2000_trash_admin_notices');
-
-/**
- * Adds a 'Move All to Trash' button on the Before & After admin list page for administrators.
- */
-function beforeafter_add_bulk_trash_button() {
-    $screen = get_current_screen();
-    // Check if we are on the correct admin page
-    if ( 'edit-beforeafter' !== $screen->id ) {
-        return;
-    }
-
-    // Only show for users who can manage options
-    if ( ! current_user_can( 'manage_options' ) ) {
-        return;
-    }
-
-    // Create a secure URL for the action
-    $nonce = wp_create_nonce( 'beforeafter_bulk_trash_all_nonce' );
-    $trash_url = add_query_arg( array(
-        'action'   => 'beforeafter_bulk_trash_all',
-        '_wpnonce' => $nonce,
-    ), admin_url( 'admin.php' ) );
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // Add the button next to the other bulk action controls
-            $('.bulkactions').append(
-                '<a href="<?php echo esc_url( $trash_url ); ?>" id="doaction_trash_all_beforeafter" class="button action" style="margin-left: 5px;"><?php _e( 'Move All to Trash', 'beforeafter' ); ?></a>'
-            );
-
-            // Add a confirmation dialog
-            $('#doaction_trash_all_beforeafter').on('click', function(e) {
-                if (!confirm('<?php _e( 'Are you sure you want to move all Before & After posts to the trash? This will be done in the background and may take some time.', 'beforeafter' ); ?>')) {
-                    e.preventDefault();
-                } else {
-                    $(this).text('<?php _e( 'Trashing...', 'beforeafter' ); ?>').prop('disabled', true);
-                }
-            });
-        });
-    </script>
-    <?php
-}
-add_action( 'admin_footer-edit.php', 'beforeafter_add_bulk_trash_button' );
-
-/**
- * Handles the logic for initiating the bulk trashing of 'beforeafter' posts.
- */
-function beforeafter_handle_bulk_trash() {
-    check_admin_referer( 'beforeafter_bulk_trash_all_nonce' );
-
-    if ( ! current_user_can( 'manage_options' ) ) {
-        wp_die( __( 'You do not have sufficient permissions to perform this action.', 'beforeafter' ) );
-    }
-
-    $all_posts = get_posts( array(
-        'post_type'      => 'beforeafter',
-        'posts_per_page' => -1,
-        'fields'         => 'ids',
-        'post_status'    => 'any',
-    ) );
-
-    if ( ! empty( $all_posts ) ) {
-        // Store post IDs in a transient for background processing
-        set_transient( 'beforeafter_bulk_trash_ids', $all_posts, HOUR_IN_SECONDS );
-        
-        // Schedule a one-off event to start the process immediately
-        wp_schedule_single_event( time(), 'beforeafter_process_trash_batch_hook' );
-        
-        // Set a transient to show a "started" notice
-        set_transient( 'beforeafter_trash_notice', 'started', 60 );
-    }
-
-    // Redirect back to the admin page
-    wp_redirect( admin_url( 'edit.php?post_type=beforeafter' ) );
-    exit;
-}
-add_action( 'admin_action_beforeafter_bulk_trash_all', 'beforeafter_handle_bulk_trash' );
-
-/**
- * Processes a single batch of 'beforeafter' posts to be trashed via WP-Cron.
- */
-function beforeafter_process_trash_batch() {
-    $post_ids = get_transient( 'beforeafter_bulk_trash_ids' );
-
-    if ( empty( $post_ids ) ) {
-        set_transient( 'beforeafter_trash_notice', 'completed', 60 );
-        return;
-    }
-
-    // Process in batches of 50 to avoid timeouts
-    $batch_size = 50;
-    $ids_to_trash = array_splice( $post_ids, 0, $batch_size );
-
-    foreach ( $ids_to_trash as $post_id ) {
-        wp_trash_post( $post_id );
-    }
-
-    if ( ! empty( $post_ids ) ) {
-        // Reschedule for the next batch
-        set_transient( 'beforeafter_bulk_trash_ids', $post_ids, HOUR_IN_SECONDS );
-        wp_schedule_single_event( time() + 2, 'beforeafter_process_trash_batch_hook' );
-    } else {
-        // Clean up when done
-        delete_transient( 'beforeafter_bulk_trash_ids' );
-        set_transient( 'beforeafter_trash_notice', 'completed', 60 );
-    }
-}
-add_action( 'beforeafter_process_trash_batch_hook', 'beforeafter_process_trash_batch' );
-
-/**
- * Displays admin notices for the bulk trash process.
- */
-function beforeafter_trash_admin_notices() {
-    // Only show notices on the relevant admin page
-    $screen = get_current_screen();
-    if ( 'edit-beforeafter' !== $screen->id ) {
-        return;
-    }
-
-    $notice = get_transient( 'beforeafter_trash_notice' );
-
-    if ( ! $notice ) {
-        return;
-    }
-    
-    if ( 'started' === $notice ) {
-        echo '<div class="notice notice-info is-dismissible"><p>' . __( 'Started moving all Before & After posts to the trash. This is happening in the background.', 'beforeafter' ) . '</p></div>';
-    } elseif ( 'completed' === $notice ) {
-        echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Successfully moved all Before & After posts to the trash.', 'beforeafter' ) . '</p></div>';
-    }
-
-    // Delete the transient so the notice is only shown once
-    delete_transient( 'beforeafter_trash_notice' );
-}
-add_action( 'admin_notices', 'beforeafter_trash_admin_notices' );
