@@ -1,170 +1,44 @@
 <?php
-
-
-/**
- * Adds a 'Move All to Trash' button on the Natura 2000 Sites admin list page for administrators.
- */
-function natura_2000_add_bulk_trash_button()
-{
-    $screen = get_current_screen();
-    if ('edit-natura_2000_site' !== $screen->id) {
-        return;
-    }
-
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-
-    $nonce = wp_create_nonce('beforeafter_bulk_trash_natura_sites_nonce');
-    $trash_url = add_query_arg(array(
-        'action' => 'beforeafter_bulk_trash_natura_sites',
-        '_wpnonce' => $nonce,
-    ), admin_url('admin.php'));
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function ($) {
-            $('.bulkactions').append(
-                '<a href="<?php echo esc_url($trash_url); ?>" id="doaction_trash_all" class="button action" style="margin-left: 5px;"><?php _e('Move All to Trash', 'beforeafter'); ?></a>'
-            );
-
-            $('#doaction_trash_all').on('click', function (e) {
-                if (!confirm('<?php _e('Are you sure you want to move all Natura 2000 Sites to the trash? This will be done in the background and may take some time.', 'beforeafter'); ?>')) {
-                    e.preventDefault();
-                } else {
-                    $(this).text('<?php _e('Trashing...', 'beforeafter'); ?>').prop('disabled', true);
-                }
-            });
-        });
-    </script>
-    <?php
-}
-add_action('admin_footer-edit.php', 'natura_2000_add_bulk_trash_button');
-
-/**
- * Handles the logic for initiating the bulk trashing of 'natura_2000_site' posts.
- */
-function natura_2000_handle_bulk_trash()
-{
-    check_admin_referer('beforeafter_bulk_trash_natura_sites_nonce');
-
-    if (!current_user_can('manage_options')) {
-        wp_die(__('You do not have sufficient permissions to perform this action.', 'beforeafter'));
-    }
-
-    $all_posts = get_posts(array(
-        'post_type' => 'natura_2000_site',
-        'posts_per_page' => -1,
-        'fields' => 'ids',
-        'post_status' => 'any', // Get all statuses except trash
-    ));
-
-    if (!empty($all_posts)) {
-        // Store the list of post IDs in a transient to be processed in the background
-        set_transient('natura_2000_bulk_trash_ids', $all_posts, HOUR_IN_SECONDS);
-
-        // Schedule an immediate, one-off event to start the processing
-        wp_schedule_single_event(time(), 'natura_2000_process_trash_batch_hook');
-
-        // Set a transient to show the "started" notice
-        set_transient('natura_2000_trash_notice', 'started', 60);
-    }
-
-    // Redirect back to the admin page
-    wp_redirect(admin_url('edit.php?post_type=natura_2000_site'));
+// Exit if accessed directly
+if (!defined('ABSPATH')) {
     exit;
 }
-add_action('admin_action_beforeafter_bulk_trash_natura_sites', 'natura_2000_handle_bulk_trash');
 
 /**
- * Processes a single batch of 'natura_2000_site' posts to be trashed.
- * This is triggered by a WP-Cron event.
- */
-function natura_2000_process_trash_batch()
-{
-    $post_ids = get_transient('natura_2000_bulk_trash_ids');
-
-    if (empty($post_ids)) {
-        // Job is done, set a notice and finish
-        set_transient('natura_2000_trash_notice', 'completed', 60);
-        return;
-    }
-
-    // Process a batch of 50 posts at a time to prevent timeouts
-    $batch_size = 50;
-    $ids_to_trash = array_splice($post_ids, 0, $batch_size);
-
-    foreach ($ids_to_trash as $post_id) {
-        wp_trash_post($post_id);
-    }
-
-    if (!empty($post_ids)) {
-        // If there are more posts, update the transient and reschedule the next batch
-        set_transient('natura_2000_bulk_trash_ids', $post_ids, HOUR_IN_SECONDS);
-        wp_schedule_single_event(time() + 2, 'natura_2000_process_trash_batch_hook');
-    } else {
-        // If this was the last batch, delete the transient and set the completed notice
-        delete_transient('natura_2000_bulk_trash_ids');
-        set_transient('natura_2000_trash_notice', 'completed', 60);
-    }
-}
-add_action('natura_2000_process_trash_batch_hook', 'natura_2000_process_trash_batch');
-
-/**
- * Displays admin notices for the bulk trash process.
- */
-function natura_2000_trash_admin_notices()
-{
-    $notice = get_transient('natura_2000_trash_notice');
-
-    if (!$notice) {
-        return;
-    }
-
-    if ('started' === $notice) {
-        echo '<div class="notice notice-info is-dismissible"><p>' . __('Started moving all Natura 2000 Sites to the trash. This will happen in the background.', 'beforeafter') . '</p></div>';
-    } elseif ('completed' === $notice) {
-        echo '<div class="notice notice-success is-dismissible"><p>' . __('Successfully moved all Natura 2000 Sites to the trash.', 'beforeafter') . '</p></div>';
-    }
-
-    // Delete the transient so the notice doesn't show again
-    delete_transient('natura_2000_trash_notice');
-}
-add_action('admin_notices', 'natura_2000_trash_admin_notices');
-
-
-/**
- * Adds a 'Move All to Trash' button on the Before & After admin list page for administrators.
+ * Adds a 'Move All to Trash' button on supported post type list screens.
  */
 function beforeafter_add_bulk_trash_button()
 {
     $screen = get_current_screen();
-    // Check if we are on the correct admin page
-    if ('edit-beforeafter' !== $screen->id) {
+    $supported_post_types = array(
+        'natura_2000_site' => __('Natura 2000 Sites', 'beforeafter'),
+        'beforeafter'      => __('Before & After posts', 'beforeafter'),
+    );
+
+    if ( ! isset( $supported_post_types[ $screen->post_type ] ) ) {
         return;
     }
 
-    // Only show for users who can manage options
     if (!current_user_can('manage_options')) {
         return;
     }
-
-    // Create a secure URL for the action
-    $nonce = wp_create_nonce('beforeafter_bulk_trash_all_nonce');
+    
+    $post_type_label = $supported_post_types[ $screen->post_type ];
+    $nonce = wp_create_nonce('beforeafter_bulk_trash_' . $screen->post_type . '_nonce');
     $trash_url = add_query_arg(array(
-        'action' => 'beforeafter_bulk_trash_all',
+        'action' => 'beforeafter_bulk_trash',
+        'post_type' => $screen->post_type,
         '_wpnonce' => $nonce,
     ), admin_url('admin.php'));
     ?>
     <script type="text/javascript">
         jQuery(document).ready(function ($) {
-            // Add the button next to the other bulk action controls
             $('.bulkactions').append(
-                '<a href="<?php echo esc_url($trash_url); ?>" id="doaction_trash_all_beforeafter" class="button action" style="margin-left: 5px;"><?php _e('Move All to Trash', 'beforeafter'); ?></a>'
+                '<a href="<?php echo esc_url($trash_url); ?>" id="doaction_trash_all_<?php echo esc_js($screen->post_type); ?>" class="button action" style="margin-left: 5px;"><?php _e('Move All to Trash', 'beforeafter'); ?></a>'
             );
 
-            // Add a confirmation dialog
-            $('#doaction_trash_all_beforeafter').on('click', function (e) {
-                if (!confirm('<?php _e('Are you sure you want to move all Before & After posts to the trash? This will be done in the background and may take some time.', 'beforeafter'); ?>')) {
+            $('#doaction_trash_all_<?php echo esc_js($screen->post_type); ?>').on('click', function (e) {
+                if (!confirm('<?php printf(esc_js(__('Are you sure you want to move all %s to the trash? This will be done in the background and may take some time.', 'beforeafter')), esc_js($post_type_label)); ?>')) {
                     e.preventDefault();
                 } else {
                     $(this).text('<?php _e('Trashing...', 'beforeafter'); ?>').prop('disabled', true);
@@ -177,53 +51,52 @@ function beforeafter_add_bulk_trash_button()
 add_action('admin_footer-edit.php', 'beforeafter_add_bulk_trash_button');
 
 /**
- * Handles the logic for initiating the bulk trashing of 'beforeafter' posts.
+ * Handles the logic for initiating the bulk trashing of posts.
  */
 function beforeafter_handle_bulk_trash()
 {
-    check_admin_referer('beforeafter_bulk_trash_all_nonce');
+    if ( ! isset( $_REQUEST['post_type'] ) ) {
+        wp_die( __( 'Missing post type.', 'beforeafter' ) );
+    }
+    $post_type = sanitize_key( $_REQUEST['post_type'] );
+
+    check_admin_referer('beforeafter_bulk_trash_' . $post_type . '_nonce');
 
     if (!current_user_can('manage_options')) {
         wp_die(__('You do not have sufficient permissions to perform this action.', 'beforeafter'));
     }
 
     $all_posts = get_posts(array(
-        'post_type' => 'beforeafter',
+        'post_type' => $post_type,
         'posts_per_page' => -1,
         'fields' => 'ids',
-        'post_status' => 'any',
+        'post_status' => 'any', // Get all statuses except trash
     ));
 
     if (!empty($all_posts)) {
-        // Store post IDs in a transient for background processing
-        set_transient('beforeafter_bulk_trash_ids', $all_posts, HOUR_IN_SECONDS);
-
-        // Schedule a one-off event to start the process immediately
-        wp_schedule_single_event(time(), 'beforeafter_process_trash_batch_hook');
-
-        // Set a transient to show a "started" notice
-        set_transient('beforeafter_trash_notice', 'started', 60);
+        set_transient($post_type . '_bulk_trash_ids', $all_posts, HOUR_IN_SECONDS);
+        wp_schedule_single_event(time(), 'beforeafter_process_trash_batch_hook', array($post_type));
+        set_transient($post_type . '_trash_notice', 'started', 60);
     }
 
-    // Redirect back to the admin page
-    wp_redirect(admin_url('edit.php?post_type=beforeafter'));
+    wp_redirect(admin_url('edit.php?post_type=' . $post_type));
     exit;
 }
-add_action('admin_action_beforeafter_bulk_trash_all', 'beforeafter_handle_bulk_trash');
+add_action('admin_action_beforeafter_bulk_trash', 'beforeafter_handle_bulk_trash');
 
 /**
- * Processes a single batch of 'beforeafter' posts to be trashed via WP-Cron.
+ * Processes a single batch of posts to be trashed.
+ * This is triggered by a WP-Cron event.
  */
-function beforeafter_process_trash_batch()
+function beforeafter_process_trash_batch($post_type)
 {
-    $post_ids = get_transient('beforeafter_bulk_trash_ids');
+    $post_ids = get_transient($post_type . '_bulk_trash_ids');
 
     if (empty($post_ids)) {
-        set_transient('beforeafter_trash_notice', 'completed', 60);
+        set_transient($post_type . '_trash_notice', 'completed', 60);
         return;
     }
 
-    // Process in batches of 50 to avoid timeouts
     $batch_size = 50;
     $ids_to_trash = array_splice($post_ids, 0, $batch_size);
 
@@ -232,41 +105,79 @@ function beforeafter_process_trash_batch()
     }
 
     if (!empty($post_ids)) {
-        // Reschedule for the next batch
-        set_transient('beforeafter_bulk_trash_ids', $post_ids, HOUR_IN_SECONDS);
-        wp_schedule_single_event(time() + 2, 'beforeafter_process_trash_batch_hook');
+        set_transient($post_type . '_bulk_trash_ids', $post_ids, HOUR_IN_SECONDS);
+        wp_schedule_single_event(time() + 2, 'beforeafter_process_trash_batch_hook', array($post_type));
     } else {
-        // Clean up when done
-        delete_transient('beforeafter_bulk_trash_ids');
-        set_transient('beforeafter_trash_notice', 'completed', 60);
+        delete_transient($post_type . '_bulk_trash_ids');
+        set_transient($post_type . '_trash_notice', 'completed', 60);
     }
 }
-add_action('beforeafter_process_trash_batch_hook', 'beforeafter_process_trash_batch');
+add_action('beforeafter_process_trash_batch_hook', 'beforeafter_process_trash_batch', 10, 1);
 
 /**
  * Displays admin notices for the bulk trash process.
  */
 function beforeafter_trash_admin_notices()
 {
-    // Only show notices on the relevant admin page
     $screen = get_current_screen();
-    if ('edit-beforeafter' !== $screen->id) {
+    $supported_post_types = array(
+        'natura_2000_site' => __('Natura 2000 Sites', 'beforeafter'),
+        'beforeafter'      => __('Before & After posts', 'beforeafter'),
+    );
+
+    if ( ! isset( $supported_post_types[ $screen->post_type ] ) ) {
         return;
     }
 
-    $notice = get_transient('beforeafter_trash_notice');
+    $post_type = $screen->post_type;
+    $post_type_label = $supported_post_types[$post_type];
+    $notice = get_transient($post_type . '_trash_notice');
 
     if (!$notice) {
         return;
     }
 
     if ('started' === $notice) {
-        echo '<div class="notice notice-info is-dismissible"><p>' . __('Started moving all Before & After posts to the trash. This is happening in the background.', 'beforeafter') . '</p></div>';
+        $message = sprintf(__('Started moving all %s to the trash. This will happen in the background.', 'beforeafter'), $post_type_label);
+        echo '<div class="notice notice-info is-dismissible"><p>' . esc_html($message) . '</p></div>';
     } elseif ('completed' === $notice) {
-        echo '<div class="notice notice-success is-dismissible"><p>' . __('Successfully moved all Before & After posts to the trash.', 'beforeafter') . '</p></div>';
+        $message = sprintf(__('Successfully moved all %s to the trash.', 'beforeafter'), $post_type_label);
+        echo '<div class="notice notice-success is-dismissible"><p>' . esc_html($message) . '</p></div>';
     }
 
-    // Delete the transient so the notice is only shown once
-    delete_transient('beforeafter_trash_notice');
+    delete_transient($post_type . '_trash_notice');
 }
 add_action('admin_notices', 'beforeafter_trash_admin_notices');
+
+/**
+ * Customize the messages when a post is moved to the Trash for our CPTs.
+ *
+ * @param array $messages Post updated messages.
+ * @return array Filtered post updated messages.
+ */
+function beforeafter_customize_trash_messages( $messages )
+{
+    global $post;
+
+    // A post object might not be available.
+    if ( ! $post ) {
+        return $messages;
+    }
+
+    $post_type = get_post_type( $post );
+
+    if ( 'beforeafter' === $post_type ) {
+        if ( ! isset( $messages['beforeafter'] ) ) {
+            $messages['beforeafter'] = $messages['post'];
+        }
+        $messages['beforeafter'][10] = __( 'Before/After item moved to the Trash.', 'beforeafter' );
+    } elseif ( 'n2k_trash' === $post_type ) {
+        if ( ! isset( $messages['n2k_trash'] ) ) {
+            $messages['n2k_trash'] = $messages['post'];
+        }
+        $messages['n2k_trash'][10] = __( 'N2K trash item moved to the Trash.', 'beforeafter' );
+    }
+
+    return $messages;
+}
+add_filter( 'post_updated_messages', 'beforeafter_customize_trash_messages' );
