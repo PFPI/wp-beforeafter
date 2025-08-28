@@ -11,6 +11,7 @@ function beforeafter_add_custom_mime_types($mimes)
 {
     $mimes['geojson'] = 'application/geo+json';
     $mimes['json'] = 'application/json';
+    $mimes['txt'] = 'text/plain'; // Add this line 
     return $mimes;
 }
 add_filter('upload_mimes', 'beforeafter_add_custom_mime_types');
@@ -143,6 +144,7 @@ function beforeafter_handle_bulk_import()
             fgetcsv($handle, 1000, ","); // Skip header
             $row_number = 1;
 
+            
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                 $row_number++;
 

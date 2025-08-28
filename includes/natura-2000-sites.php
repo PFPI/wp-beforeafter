@@ -49,7 +49,8 @@ function natura_2000_meta_box_callback($post)
         'area_ha_2002',
         'area_ha_2001',
         'site_ha',
-        'most_disturbed_year'
+        'most_disturbed_year',
+        'most_disturbed_year_ha'
     );
 
     foreach ($fields as $field) {
@@ -109,7 +110,8 @@ function natura_2000_save_meta_box_data($post_id)
         'area_ha_2002',
         'area_ha_2001',
         'site_ha',
-        'most_disturbed_year'
+        'most_disturbed_year',
+        'most_disturbed_year_ha'
     );
 
     foreach ($fields as $field) {
@@ -144,6 +146,12 @@ function natura_2000_import_page_callback()
         <form method="post" enctype="multipart/form-data">
             <?php wp_nonce_field('natura_2000_import_nonce', 'natura_2000_import_nonce_field'); ?>
             <p>
+                Ensure your CSV file is formatted correctly with the columns in the following order: <br />
+                    "sitecode","countrycode","perclogged","site_ha","area_ha_2001","area_ha_2002","area_ha_2003",<br />
+                    "area_ha_2004","area_ha_2005","area_ha_2006","area_ha_2007","area_ha_2008","area_ha_2009",<br />
+                    "area_ha_2010","area_ha_2011","area_ha_2012","area_ha_2013","area_ha_2014","area_ha_2015",<br />
+                    "area_ha_2016","area_ha_2017","area_ha_2018","area_ha_2019","area_ha_2020","area_ha_2021",<br />
+                    "area_ha_2022","area_ha_2023","most_disturbed_year","most_disturbed_year_ha","sitename". <br />
                 <label for="csv_file">Upload CSV file:</label>
                 <input type="file" id="csv_file" name="csv_file" accept=".csv">
             </p>
@@ -208,8 +216,8 @@ function natura_2000_handle_import()
                         'countrycode',
                         'perclogged',
                         'site_ha',
-                        'most_disturbed_year_ha',
-                        'most_disturbed_year'
+                        'most_disturbed_year',
+                        'most_disturbed_year_ha'
                     );
 
                     // Add all yearly disturbance fields
