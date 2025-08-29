@@ -76,6 +76,10 @@ function natura_2000_meta_box_callback($post)
     $fields = array(
         'sitecode',
         'sitename',
+        'raster_ymin', // Add this
+        'raster_ymax', // Add this
+        'raster_xmin', // Add this
+        'raster_xmax', // Add this
         'area_ha_2023',
         'area_ha_2022',
         'area_ha_2021',
@@ -137,6 +141,10 @@ function natura_2000_save_meta_box_data($post_id)
     $fields = array(
         'sitecode',
         'sitename',
+        'raster_ymin', // Add this
+        'raster_ymax', // Add this
+        'raster_xmin', // Add this
+        'raster_xmax', // Add this
         'area_ha_2023',
         'area_ha_2022',
         'area_ha_2021',
@@ -354,3 +362,101 @@ function natura_2000_handle_import()
     }
 }
 add_action('admin_init', 'natura_2000_handle_import');
+
+// --- ADD THE FOLLOWING CODE TO THE END OF includes/natura-2000-sites.php ---
+
+/**
+ * Add submenu page for importing raster bounds.
+ */
+function natura_2000_bounds_import_submenu_page() {
+    add_submenu_page(
+        'edit.php?post_type=natura_2000_site',
+        'Import Raster Bounds',
+        'Import Raster Bounds',
+        'manage_options',
+        'natura-2000-bounds-import',
+        'natura_2000_bounds_import_page_callback'
+    );
+}
+add_action('admin_menu', 'natura_2000_bounds_import_submenu_page');
+
+/**
+ * Callback function for the bounds import page.
+ */
+function natura_2000_bounds_import_page_callback() {
+    ?>
+    <div class="wrap">
+        <h1>Import Raster Bounds from CSV</h1>
+        <p>This tool will update existing Natura 2000 Site posts with the corner coordinates from the raster bounds CSV.</p>
+        <form method="post" enctype="multipart/form-data">
+            <?php wp_nonce_field('natura_2000_bounds_import_nonce', 'natura_2000_bounds_import_nonce_field'); ?>
+            <p>
+                <label for="bounds_csv_file">Upload the `raster_bounds_... .csv` file:</label>
+                <input type="file" id="bounds_csv_file" name="bounds_csv_file" accept=".csv">
+            </p>
+            <p>
+                <input type="submit" name="submit_bounds_import" class="button button-primary" value="Start Bounds Import">
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+/**
+ * Handle the raster bounds CSV import.
+ */
+function natura_2000_handle_bounds_import() {
+    if (isset($_POST['submit_bounds_import']) && isset($_FILES['bounds_csv_file'])) {
+        if (!isset($_POST['natura_2000_bounds_import_nonce_field']) || !wp_verify_nonce($_POST['natura_2000_bounds_import_nonce_field'], 'natura_2000_bounds_import_nonce')) {
+            wp_die('Security check failed.');
+        }
+
+        if ($_FILES['bounds_csv_file']['error'] > 0) {
+            wp_die('File upload error: ' . $_FILES['bounds_csv_file']['error']);
+        }
+
+        $csv_file = $_FILES['bounds_csv_file']['tmp_name'];
+        if (($handle = fopen($csv_file, "r")) !== FALSE) {
+            $header = fgetcsv($handle); // Read header
+            $updated_count = 0;
+            $not_found_count = 0;
+
+            while (($data = fgetcsv($handle)) !== FALSE) {
+                $sitecode = $data[0];
+                $bounds = [
+                    '_raster_ymin' => $data[1],
+                    '_raster_ymax' => $data[2],
+                    '_raster_xmin' => $data[3],
+                    '_raster_xmax' => $data[4],
+                ];
+
+                // Find the post with this sitecode (title)
+                $args = [
+                    'post_type' => 'natura_2000_site',
+                    'title' => $sitecode,
+                    'posts_per_page' => 1,
+                    'fields' => 'ids'
+                ];
+                $query = new WP_Query($args);
+
+                if ($query->have_posts()) {
+                    $post_id = $query->posts[0];
+                    foreach ($bounds as $key => $value) {
+                        update_post_meta($post_id, $key, sanitize_text_field($value));
+                    }
+                    $updated_count++;
+                } else {
+                    $not_found_count++;
+                }
+            }
+            fclose($handle);
+
+            // Add an admin notice with the results
+            add_action('admin_notices', function() use ($updated_count, $not_found_count) {
+                $message = "Raster bounds import complete. Updated: {$updated_count} sites. Not Found: {$not_found_count} sites.";
+                echo "<div class='notice notice-success is-dismissible'><p>{$message}</p></div>";
+            });
+        }
+    }
+}
+add_action('admin_init', 'natura_2000_handle_bounds_import');

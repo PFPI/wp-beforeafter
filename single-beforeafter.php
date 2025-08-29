@@ -60,7 +60,15 @@ get_header(); ?>
                     // --- Get GeoJSON from Natura 2000 Site ---
                     $geojson_file_id = get_post_meta($natura_post_id, '_geojson_file_id', true);
                     $geojson_file_url = $geojson_file_id ? wp_get_attachment_url($geojson_file_id) : '';
+                    // --- NEW: Get Raster Overlay Data ---
+                    $raster_ymin = get_post_meta($natura_post_id, '_raster_ymin', true);
+                    $raster_ymax = get_post_meta($natura_post_id, '_raster_ymax', true);
+                    $raster_xmin = get_post_meta($natura_post_id, '_raster_xmin', true);
+                    $raster_xmax = get_post_meta($natura_post_id, '_raster_xmax', true);
 
+                    // Construct the URL to the raster PNG file
+                    $upload_dir = wp_upload_dir();
+                    $raster_image_url = $upload_dir['baseurl'] . '/disturbance-rasters/' . $sitecode . '_disturbance.png';
                     // Loop through years to build data for graph and calculate total
                     for ($year = 2001; $year <= 2023; $year++) {
                         $meta_key = '_area_ha_' . $year;
@@ -84,12 +92,19 @@ get_header(); ?>
                 }
                 wp_reset_postdata();
                 // --- Pass all data to the map script ---
-            wp_localize_script('beforeafter-map-js', 'beforeafter_map_data', array(
-                'lat' => $latitude,
-                'lng' => $longitude,
-                'zoom' => $zoom_level,
-                'geojson_url' => isset($geojson_file_url) ? $geojson_file_url : ''
-            ));
+                wp_localize_script('beforeafter-map-js', 'beforeafter_map_data', array(
+                    'lat' => $latitude,
+                    'lng' => $longitude,
+                    'zoom' => $zoom_level,
+                    'geojson_url' => isset($geojson_file_url) ? $geojson_file_url : '',
+                    'raster_url' => $raster_image_url, // Add this
+                    'raster_bounds' => [             // Add this
+                        'ymin' => $raster_ymin,
+                        'ymax' => $raster_ymax,
+                        'xmin' => $raster_xmin,
+                        'xmax' => $raster_xmax
+                    ]
+                ));
             }
             ?>
 
@@ -117,7 +132,7 @@ get_header(); ?>
 
                                         // Build the formatted string
                                         $point_information = sprintf(
-                                            '<strong>POINT INFORMATION:</strong> This point at %s, %s in %s (%s) was potentially disturbed in %s. After evaluation of satellite imagery, it was rated as %s.',
+                                            '<strong>POINT INFORMATION:</strong> This point at %s, %s in %s (%s) was potentially disturbed in %s. After evaluation of satellite imagery, it was rated as %s. The map below shows the site boundaries (red outline) and potential disturbance (other red) - both can be toggled on/off using the map controls on the upper right.',
                                             esc_html(number_format($latitude, 4)),
                                             esc_html(number_format($longitude, 4)),
                                             esc_html($sitecode),

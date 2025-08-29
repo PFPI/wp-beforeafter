@@ -37,7 +37,7 @@ jQuery(document).ready(function($){
     });
 
     // Media uploader for GeoJSON file
-    $(document).on('click', '.beforeafter_upload_file_button', function(e) {
+    /* $(document).on('click', '.beforeafter_upload_file_button', function(e) {
         e.preventDefault();
 
         var button = $(this);
@@ -57,7 +57,7 @@ jQuery(document).ready(function($){
             remove_button.show();
         }).open();
     });
-
+ */
     // Remove file button
     $(document).on('click', '.beforeafter_remove_file_button', function(e) {
         e.preventDefault();
