@@ -41,14 +41,14 @@ function beforeafter_add_meta_boxes()
         'high'
     );
 
-    add_meta_box(
+/*     add_meta_box(
         'beforeafter_geojson',
         __('GeoJSON File', 'beforeafter'),
         'beforeafter_geojson_callback',
         'beforeafter',
         'normal',
         'high'
-    );
+    ); */
 }
 add_action('add_meta_boxes', 'beforeafter_add_meta_boxes');
 
@@ -200,7 +200,7 @@ function beforeafter_site_details_callback($post)
 /**
  * Callback for the GeoJSON meta box
  */
-function beforeafter_geojson_callback($post)
+/* function beforeafter_geojson_callback($post)
 {
     $geojson_file_id = get_post_meta($post->ID, '_beforeafter_geojson_file_id', true);
     $geojson_file_url = $geojson_file_id ? wp_get_attachment_url($geojson_file_id) : '';
@@ -217,7 +217,7 @@ function beforeafter_geojson_callback($post)
     </p>
     <?php
 }
-
+ */
 
 
 
@@ -321,11 +321,11 @@ function beforeafter_save_meta_data($post_id)
     }
 
     // Save GeoJSON File ID
-    if (isset($_POST['beforeafter_geojson_file_id'])) {
+/*     if (isset($_POST['beforeafter_geojson_file_id'])) {
         update_post_meta($post_id, '_beforeafter_geojson_file_id', sanitize_text_field($_POST['beforeafter_geojson_file_id']));
     } else {
         delete_post_meta($post_id, '_beforeafter_geojson_file_id');
-    }
+    } */
     // --- NEW: Set Default Taxonomy Term ---
 // Always assign the 'Logging Photos' term to this post on save.
     wp_set_object_terms($post_id, 'logging-photos', 'type');
@@ -391,7 +391,7 @@ function beforeafter_admin_scripts($hook)
         // Enqueue custom script for image selection
         wp_enqueue_script(
             'beforeafter-admin-script',
-            plugin_dir_url(__FILE__) . 'before-after-admin.js',
+            BEFOREAFTER_PLUGIN_URL . 'before-after-admin.js',
             array('jquery'),
             '1.0',
             true

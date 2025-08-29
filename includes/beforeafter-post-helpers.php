@@ -160,7 +160,7 @@ function beforeafter_handle_bulk_import()
                 $zoom_level = $data[9];
                 $disturbed_date = $data[10];
                 $conclusion = $data[11];
-                $geojson_file_name = $data[12];
+                //$geojson_file_name = $data[12];
                 $location_name = $data[13];
 
                 $post_title = $site_id;
@@ -258,9 +258,9 @@ function beforeafter_handle_bulk_import()
                         set_post_thumbnail($post_id, $after_image_id);
                     }
 
-                    $geojson_file_id = $attach_file($geojson_file_name, $post_id);
+/*                     $geojson_file_id = $attach_file($geojson_file_name, $post_id);
                     if ($geojson_file_id)
-                        update_post_meta($post_id, '_beforeafter_geojson_file_id', $geojson_file_id);
+                        update_post_meta($post_id, '_beforeafter_geojson_file_id', $geojson_file_id); */
 
                     $import_successes[] = "Successfully imported post: " . esc_html($post_title);
                 } else {
