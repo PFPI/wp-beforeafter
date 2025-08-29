@@ -57,6 +57,9 @@ get_header(); ?>
                     $site_ha = get_post_meta($natura_post_id, '_site_ha', true);
                     $sitename = get_post_meta($natura_post_id, '_sitename', true);
                     $most_disturbed_year = get_post_meta($natura_post_id, '_most_disturbed_year', true);
+                    // --- Get GeoJSON from Natura 2000 Site ---
+                    $geojson_file_id = get_post_meta($natura_post_id, '_geojson_file_id', true);
+                    $geojson_file_url = $geojson_file_id ? wp_get_attachment_url($geojson_file_id) : '';
 
                     // Loop through years to build data for graph and calculate total
                     for ($year = 2001; $year <= 2023; $year++) {
@@ -80,6 +83,13 @@ get_header(); ?>
                     ));
                 }
                 wp_reset_postdata();
+                // --- Pass all data to the map script ---
+            wp_localize_script('beforeafter-map-js', 'beforeafter_map_data', array(
+                'lat' => $latitude,
+                'lng' => $longitude,
+                'zoom' => $zoom_level,
+                'geojson_url' => isset($geojson_file_url) ? $geojson_file_url : ''
+            ));
             }
             ?>
 

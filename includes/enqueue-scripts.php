@@ -52,7 +52,7 @@ function beforeafter_enqueue_custom_slider_scripts()
             '1.0.0',
             true
         );
-
+/* 
         // Pass data to script
         $post_id = get_the_ID();
         $latitude = get_post_meta($post_id, '_beforeafter_latitude', true);
@@ -67,7 +67,7 @@ function beforeafter_enqueue_custom_slider_scripts()
             'lng' => $longitude,
             'zoom' => $zoom_level,
             'geojson_url' => $geojson_file_url
-        ));
+        )); */
 
         // Enqueue Chart.js from a CDN
         wp_enqueue_script(
