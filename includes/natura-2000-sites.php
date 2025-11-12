@@ -293,7 +293,27 @@ function natura_2000_handle_import()
                     $import_successes[] = "Successfully imported post for sitecode: " . esc_html($sitecode);
 
                     // ... (rest of your meta data import logic)
+                    $fields_to_import = array(
+                        'sitecode',
+                        'sitename',
+                        'countrycode',
+                        'perclogged',
+                        'site_ha',
+                        'most_disturbed_year',
+                        'most_disturbed_year_ha'
+                    );
 
+                    // Add all yearly disturbance fields
+                    for ($year = 2001; $year <= 2023; $year++) {
+                        $fields_to_import[] = 'area_ha_' . $year;
+                    }
+
+                    // Loop through the fields and update post meta if the column exists in the CSV
+                    foreach ($fields_to_import as $field) {
+                        if (isset($column_map[$field]) && isset($data[$column_map[$field]])) {
+                            update_post_meta($post_id, '_' . $field, sanitize_text_field($data[$column_map[$field]]));
+                        }
+                    }
 
                     // --- REVISED: GeoJSON/TXT file handling ---
                     $geojson_filename = $sitecode . '.json'; // Or .txt
@@ -318,6 +338,7 @@ function natura_2000_handle_import()
                             $file_array = [
                                 'name'     => basename($file_to_upload),
                                 'tmp_name' => $temp_file,
+                                'type' => $mime_type,
                             ];
 
                             $attachment_id = media_handle_sideload($file_array, $post_id);
