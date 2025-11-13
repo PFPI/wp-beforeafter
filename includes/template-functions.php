@@ -69,3 +69,30 @@ function beforeafter_set_default_featured_image($html, $post_id, $post_thumbnail
 add_filter('post_thumbnail_html', 'beforeafter_set_default_featured_image', 10, 5);
 
 
+/**
+ * Add plugin-based page templates to the "Template" dropdown.
+ */
+function beforeafter_register_page_templates($templates) {
+    // Add our new template
+    $templates['page-template-beforeafter-library.php'] = __('Before & After Library', 'beforeafter');
+    return $templates;
+}
+add_filter('theme_page_templates', 'beforeafter_register_page_templates');
+
+/**
+ * Load the plugin-based page template file.
+ */
+function beforeafter_load_page_template($template) {
+    if ( is_page() ) {
+        $meta_template = get_post_meta( get_the_ID(), '_wp_page_template', true );
+
+        if ( 'page-template-beforeafter-library.php' === $meta_template ) {
+            $new_template = BEFOREAFTER_PLUGIN_PATH . 'page-template-beforeafter-library.php';
+            if ( file_exists( $new_template ) ) {
+                return $new_template;
+            }
+        }
+    }
+    return $template;
+}
+add_filter('template_include', 'beforeafter_load_page_template');
