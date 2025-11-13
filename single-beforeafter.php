@@ -155,18 +155,18 @@ get_header(); ?>
 
                                 <?php if ($before_image_url && $after_image_url): ?>
                                     <figure id="custom-slider-<?php echo get_the_ID(); ?>" class="cd-image-container my-8">
-                                        <img src="<?php echo esc_url($before_image_url); ?>"
-                                            alt="<?php echo esc_attr(get_the_title() . ' Before'); ?>">
-                                        <?php if (!empty($before_image_label)): ?>
+                                        <img src="<?php echo esc_url($after_image_url); ?>"
+                                            alt="<?php echo esc_attr(get_the_title() . ' After'); ?>">
+                                        <?php if (!empty($after_image_label)): ?>
                                             <span class="cd-image-label"
-                                                data-type="original"><?php echo esc_html($before_image_label); ?></span>
+                                                data-type="original"><?php echo esc_html($after_image_label); ?></span>
                                         <?php endif; ?>
 
-                                        <div class="cd-resize-img"> <img src="<?php echo esc_url($after_image_url); ?>"
-                                                alt="<?php echo esc_attr(get_the_title() . ' After'); ?>">
-                                            <?php if (!empty($after_image_label)): ?>
+                                        <div class="cd-resize-img"> <img src="<?php echo esc_url($before_image_url); ?>"
+                                                alt="<?php echo esc_attr(get_the_title() . ' Before'); ?>">
+                                            <?php if (!empty($before_image_label)): ?>
                                                 <span class="cd-image-label"
-                                                    data-type="modified"><?php echo esc_html($after_image_label); ?></span>
+                                                    data-type="modified"><?php echo esc_html($before_image_label); ?></span>
                                             <?php endif; ?>
                                         </div>
 
