@@ -71,7 +71,7 @@ function beforeafter_display_related_by_sitecode()
             // Use the theme's existing HTML structure for the section.
             echo '<div class="related-posts">';
             echo '<div class="container my-10 lg:my-12">';
-            echo '<h3 class="block text-moss mb-4">Related Before & After Posts</h3>';
+            echo '<h3 class="block text-moss mb-4">Other Disturbances At This Natura 2000 Site</h3>';
             echo '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 ">';
 
             while ($related_query->have_posts()) {

@@ -142,7 +142,7 @@ get_header(); ?>
                                         );
 
                                         // Display the final text inside a paragraph
-                                        echo '<p>' . $point_information . '</p>';
+                                        // echo '<p>' . $point_information . '</p>';
                                     }
                                     ?>
                                 </div>
@@ -179,38 +179,7 @@ get_header(); ?>
 
                             <div class="col-span-12 lg:col-span-4">
 
-                                <?php // --- Analysis Details Box --- ?>
-                                <div class="beforeafter-data bg-beige rounded-lg p-5 border border-neutral-300 mb-5">
-                                    <h3 class="h3 text-moss font-display capitalize pb-5">
-                                        <?php _e('Analysis Details', 'beforeafter'); ?>
-                                    </h3>
-                                    <ul class="list-none p-0 m-0">
-                                        <?php if (!empty($latitude)): ?>
-                                            <li class="mb-2"><strong><?php _e('Latitude:', 'beforeafter'); ?></strong>
-                                                <?php echo number_format((float) $latitude, 4); ?></li>
-                                        <?php endif; ?>
-                                        <?php if (!empty($longitude)): ?>
-                                            <li class="mb-2"><strong><?php _e('Longitude:', 'beforeafter'); ?></strong>
-                                                <?php echo number_format((float) $longitude, 4); ?></li>
-                                        <?php endif; ?>
-                                        <?php if (!empty($before_image_label)): ?>
-                                            <li class="mb-2"><strong><?php _e('Before Date:', 'beforeafter'); ?></strong>
-                                                <?php echo esc_html($before_image_label); ?></li>
-                                        <?php endif; ?>
-                                        <?php if (!empty($disturbed_date)): ?>
-                                            <li class="mb-2"><strong><?php _e('Disturbed Year:', 'beforeafter'); ?></strong>
-                                                <?php echo esc_html($disturbed_date); ?></li>
-                                        <?php endif; ?>
-                                        <?php if (!empty($after_image_label)): ?>
-                                            <li class="mb-2"><strong><?php _e('After Date:', 'beforeafter'); ?></strong>
-                                                <?php echo esc_html($after_image_label); ?></li>
-                                        <?php endif; ?>
-                                        <?php if (!empty($conclusion)): ?>
-                                            <li class="mb-2"><strong><?php _e('Conclusion:', 'beforeafter'); ?></strong>
-                                                <?php echo esc_html($conclusion); ?></li>
-                                        <?php endif; ?>
-                                    </ul>
-                                </div>
+                                
                                 <?php // --- Site Details Box --- ?>
                                 <div class="site-details bg-beige rounded-lg p-5 border border-neutral-300 mb-5">
                                     <h3 class="h3 text-moss font-display capitalize pb-5">
@@ -254,6 +223,39 @@ get_header(); ?>
                                         <?php if ($total_disturbed_area > 0): ?>
                                             <button id="open-graph-modal"
                                                 class="button-primary mt-4 w-full"><?php _e('View Disturbance Graph', 'beforeafter'); ?></button>
+                                        <?php endif; ?>
+                                    </ul>
+                                </div>
+
+                                <?php // --- Analysis Details Box --- ?>
+                                <div class="beforeafter-data bg-beige rounded-lg p-5 border border-neutral-300 mb-5">
+                                    <h3 class="h3 text-moss font-display capitalize pb-5">
+                                        <?php _e('Analysis Details', 'beforeafter'); ?>
+                                    </h3>
+                                    <ul class="list-none p-0 m-0">
+                                        <?php if (!empty($latitude)): ?>
+                                            <li class="mb-2"><strong><?php _e('Latitude:', 'beforeafter'); ?></strong>
+                                                <?php echo number_format((float) $latitude, 4); ?></li>
+                                        <?php endif; ?>
+                                        <?php if (!empty($longitude)): ?>
+                                            <li class="mb-2"><strong><?php _e('Longitude:', 'beforeafter'); ?></strong>
+                                                <?php echo number_format((float) $longitude, 4); ?></li>
+                                        <?php endif; ?>
+                                        <?php if (!empty($before_image_label)): ?>
+                                            <li class="mb-2"><strong><?php _e('Before Date:', 'beforeafter'); ?></strong>
+                                                <?php echo esc_html($before_image_label); ?></li>
+                                        <?php endif; ?>
+                                        <?php if (!empty($disturbed_date)): ?>
+                                            <li class="mb-2"><strong><?php _e('Disturbed Year:', 'beforeafter'); ?></strong>
+                                                <?php echo esc_html($disturbed_date); ?></li>
+                                        <?php endif; ?>
+                                        <?php if (!empty($after_image_label)): ?>
+                                            <li class="mb-2"><strong><?php _e('After Date:', 'beforeafter'); ?></strong>
+                                                <?php echo esc_html($after_image_label); ?></li>
+                                        <?php endif; ?>
+                                        <?php if (!empty($conclusion)): ?>
+                                            <li class="mb-2"><strong><?php _e('Conclusion:', 'beforeafter'); ?></strong>
+                                                <?php echo esc_html($conclusion); ?></li>
                                         <?php endif; ?>
                                     </ul>
                                 </div>
