@@ -18,3 +18,29 @@ This is a plugin specifically designed to showcase before and after forest clear
 - Adding a single page view for Natura 2000 Sites
 - Adding supplementary information on target species from the IUCN and Natura 2000 databases
 - Adding sample files to the repository
+
+## Installation Instructions
+ - Install and activate the plugin
+ - Modify FacetWP settings. 
+ - Add a new Facet called `location filters for beforeafters`
+    - Data source is locations, count is -1, soft limit is 8. 
+ - Add a new Listing called    `template for ba locations`
+    - in Query arguments, make sure the code matches:
+    
+```php
+<?php
+return [
+  "post_type" => [
+    "beforeafter"
+  ],
+	"facetwp" => true,
+  "post_status" => [
+    "publish"
+  ],
+  "posts_per_page" => 10
+];
+```
+
+If you want the Before&Afters to show in the resource library, 
+you'll need to edit /templates/resources.php in the theme. Add
+'beforeafters' to the list of post types in the query. 
