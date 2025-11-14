@@ -30,3 +30,4 @@ require_once BEFOREAFTER_PLUGIN_PATH . 'includes/admin-columns.php';
 require_once BEFOREAFTER_PLUGIN_PATH . 'includes/template-functions.php';
 require_once BEFOREAFTER_PLUGIN_PATH . 'includes/natura-2000-sites.php';
 require_once BEFOREAFTER_PLUGIN_PATH . 'includes/beforeafter-post-helpers.php';
+require_once BEFOREAFTER_PLUGIN_PATH . 'includes/page-template-meta.php';

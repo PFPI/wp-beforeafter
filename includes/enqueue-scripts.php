@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
  */
 function beforeafter_enqueue_custom_slider_scripts()
 {
-    if (is_singular('beforeafter')) {
+    if (is_singular('beforeafter') || is_page_template('page-template-beforeafter-library.php')) {
         // Enqueue custom slider CSS
         wp_enqueue_style(
             'beforeafter-slider-css',
