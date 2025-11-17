@@ -40,7 +40,7 @@ get_header(); ?>
 
             <div class="text-image">
                 <div class="container">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10 lg:mb-20">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-5 lg:mb-10">
                         <div class="relative"> <!-- Set parent to relative -->
                             <?php if ($before_image_url && $after_image_url): ?>
                                 <figure class="cd-image-container my-8">
@@ -69,7 +69,8 @@ get_header(); ?>
                             <?php // --- ADD THIS SNIPPET FOR THE CAPTION --- ?>
                             <?php if ($slider_caption): ?>
                                 <p class="slider-caption text-sm text-gray-600 text-center -mt-4 mb-4">
-                                    <?php echo esc_html($slider_caption); ?></p>
+                                    <?php echo esc_html($slider_caption); ?>
+                                </p>
                             <?php endif; ?>
                             <?php // --- END OF CAPTION SNIPPET --- ?>
                         </div>
@@ -87,6 +88,13 @@ get_header(); ?>
                     </div>
                 </div>
             </div>
+
+            <?php // --- NEW: All Sites Map Button --- ?>
+            <div class="container text-center my-2">
+                <button id="open-all-sites-map-modal"
+                    class="button-primary"><?php _e('View All Sites on Map', 'beforeafter'); ?></button>
+            </div>
+
 
             <?php // --- ADD THIS NEW SECTION FOR MAIN CONTENT --- ?>
             <?php
@@ -224,5 +232,13 @@ get_header(); ?>
                         </div>
                     </div>
                 </main>
-            </div><?php
+            </div>
+            <?php // --- NEW: All Sites Map Modal --- ?>
+            <div id="all-sites-map-modal" class="graph-modal">
+                <div class="graph-modal-content" style="max-width: 90vw; width: 1200px;">
+                    <span id="all-sites-map-modal-close" class="graph-modal-close">&times;</span>
+                    <div id="all-sites-leaflet-map" style="height: 70vh; width: 100%;"></div>
+                </div>
+            </div>
+            <?php
             get_footer();
