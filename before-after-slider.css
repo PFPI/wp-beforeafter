@@ -4,7 +4,8 @@
   width: 90%;
   max-width: 768px;
   margin: 2em auto;
-  user-select: none; /* Prevents text selection during drag */
+  user-select: none;
+  /* Prevents text selection during drag */
 }
 
 .cd-image-container img {
@@ -20,7 +21,7 @@
   padding: 1em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  white-space: nowrap; 
+  white-space: nowrap;
 }
 
 .cd-image-label.is-hidden {
@@ -31,14 +32,16 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 50%; /* Initial position */
+  width: 50%;
+  /* Initial position */
   height: 100%;
   overflow: hidden;
   /* Force Hardware Acceleration */
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  z-index: 2; /* Puts the "after" image wrapper on top of the "before" image */
+  z-index: 2;
+  /* Puts the "after" image wrapper on top of the "before" image */
 }
 
 .cd-resize-img img {
@@ -47,13 +50,15 @@
   left: 0;
   height: 100%;
   width: auto;
-  max-width: none; /* This is crucial to prevent the image from resizing */
+  max-width: none;
+  /* This is crucial to prevent the image from resizing */
 }
 
 .cd-resize-img .cd-image-label {
   right: auto;
   left: 0;
-  z-index: 5; /* Ensure "after" label is on top of its image */
+  z-index: 5;
+  /* Ensure "after" label is on top of its image */
 }
 
 .is-visible .cd-resize-img {
@@ -73,7 +78,8 @@
   background: #c8007a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><polygon points="6,2 0,8 6,14" style="fill:white;"/><polygon points="10,2 16,8 10,14" style="fill:white;"/></svg>') no-repeat center center;
   cursor: move;
   box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.2), 0 0 10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  z-index: 10; /* Ensures the handle is on top of everything */
+  z-index: 10;
+  /* Ensures the handle is on top of everything */
 }
 
 .cd-handle.draggable {
@@ -82,54 +88,58 @@
 }
 
 .cd-image-label[data-type="original"] {
-    right: 0;
-    z-index: 1; /* This is the fix: Puts the "before" label below the "after" image wrapper */
+  right: 0;
+  z-index: 1;
+  /* This is the fix: Puts the "before" label below the "after" image wrapper */
 }
 
 .cd-image-label[data-type="modified"] {
-    right: auto;
-    left: 0;
+  right: auto;
+  left: 0;
 }
 
 /* --- Modal Styles (for Graph and All Sites Map) --- */
 .graph-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
-    align-items: center;
-    justify-content: center;
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
 }
+
 .graph-modal.is-visible {
-    display: flex;
+  display: flex;
 }
+
 .graph-modal-content {
-    background-color: #fefefe;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 90%;
-    max-width: 800px;
-    border-radius: 8px;
-    position: relative;
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 90%;
+  max-width: 800px;
+  border-radius: 8px;
+  position: relative;
 }
+
 .graph-modal-close {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 10000 !important;
-  }
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10000 !important;
+}
 
 .graph-modal-close:hover,
 .graph-modal-close:focus {
-    color: black;
+  color: black;
 }

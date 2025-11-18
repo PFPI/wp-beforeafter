@@ -41,14 +41,14 @@ function beforeafter_add_meta_boxes()
         'high'
     );
 
-/*     add_meta_box(
-        'beforeafter_geojson',
-        __('GeoJSON File', 'beforeafter'),
-        'beforeafter_geojson_callback',
-        'beforeafter',
-        'normal',
-        'high'
-    ); */
+    /*     add_meta_box(
+            'beforeafter_geojson',
+            __('GeoJSON File', 'beforeafter'),
+            'beforeafter_geojson_callback',
+            'beforeafter',
+            'normal',
+            'high'
+        ); */
 }
 add_action('add_meta_boxes', 'beforeafter_add_meta_boxes');
 
@@ -405,7 +405,8 @@ add_action('admin_enqueue_scripts', 'beforeafter_admin_scripts');
  *
  * @return array An array of post data (title, lat, lng, permalink).
  */
-function beforeafter_get_all_sites_map_data() {
+function beforeafter_get_all_sites_map_data()
+{
     $sites_data = array();
     $args = array(
         'post_type' => 'beforeafter',
@@ -417,29 +418,29 @@ function beforeafter_get_all_sites_map_data() {
 
     if ($query->have_posts()) {
         while ($query->have_posts()) {
-                $query->the_post();
-                $post_id = get_the_ID();
-                $latitude = get_post_meta($post_id, '_beforeafter_latitude', true);
-                $longitude = get_post_meta($post_id, '_beforeafter_longitude', true);
+            $query->the_post();
+            $post_id = get_the_ID();
+            $latitude = get_post_meta($post_id, '_beforeafter_latitude', true);
+            $longitude = get_post_meta($post_id, '_beforeafter_longitude', true);
 
-                // Only add posts that have coordinates
-                if (!empty($latitude) && !empty($longitude)) {
-                    // --- NEW: Get additional data ---
-                    $conclusion = get_post_meta($post_id, '_beforeafter_conclusion', true);
-                    $sitename = get_post_meta($post_id, '_beforeafter_sitename', true);
-                    $disturbed_date = get_post_meta($post_id, '_beforeafter_disturbed_date', true);
+            // Only add posts that have coordinates
+            if (!empty($latitude) && !empty($longitude)) {
+                // --- NEW: Get additional data ---
+                $conclusion = get_post_meta($post_id, '_beforeafter_conclusion', true);
+                $sitename = get_post_meta($post_id, '_beforeafter_sitename', true);
+                $disturbed_date = get_post_meta($post_id, '_beforeafter_disturbed_date', true);
 
-                    $sites_data[] = array(
-                        'title' => get_the_title(),
-                        'lat'   => (float) $latitude,
-                        'lng'   => (float) $longitude,
-                        'url'   => get_permalink(),
-                        'conclusion' => $conclusion,
-                        'sitename' => $sitename,
-                        'disturbed_date' => $disturbed_date,
-                    );
-                }
+                $sites_data[] = array(
+                    'title' => get_the_title(),
+                    'lat' => (float) $latitude,
+                    'lng' => (float) $longitude,
+                    'url' => get_permalink(),
+                    'conclusion' => $conclusion,
+                    'sitename' => $sitename,
+                    'disturbed_date' => $disturbed_date,
+                );
             }
+        }
     }
     wp_reset_postdata();
 
