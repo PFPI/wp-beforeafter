@@ -213,7 +213,7 @@ get_header(); ?>
                                                     <?php endif; ?>
 
                                                     <a href="<?php the_permalink(); ?>" class="button-primary">
-                                                        <?php _e('View Project', 'beforeafter'); ?>
+                                                        <?php _e('View Photos', 'beforeafter'); ?>
                                                     </a>
                                                 </div>
                                             </article>
